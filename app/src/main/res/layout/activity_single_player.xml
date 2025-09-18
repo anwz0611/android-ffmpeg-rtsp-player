@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <!-- 顶部控制栏 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="8dp"
+        android:background="#f0f0f0">
+
+        <EditText
+            android:id="@+id/et_rtsp_url"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="输入RTSP地址"
+            android:text="rtsp://stream.strba.sk:1935/strba/VYHLAD_JAZERO.stream"
+            android:padding="8dp" />
+
+        <Button
+            android:id="@+id/btn_connect"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="连接"
+            android:layout_marginStart="8dp" />
+
+    </LinearLayout>
+
+    <!-- 视频显示区域 -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:background="#000000">
+
+        <SurfaceView
+            android:id="@+id/surface_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <TextView
+            android:id="@+id/tv_status"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="未连接"
+            android:textColor="#ffffff"
+            android:textSize="16sp" />
+
+    </FrameLayout>
+
+    <!-- 底部控制栏 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="8dp"
+        android:background="#f0f0f0">
+
+        <Button
+            android:id="@+id/btn_play"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="播放"
+            android:layout_marginEnd="4dp" />
+
+        <Button
+            android:id="@+id/btn_stop"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="停止"
+            android:layout_marginStart="4dp"
+            android:layout_marginEnd="4dp" />
+
+        <Button
+            android:id="@+id/btn_record"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="录制"
+            android:layout_marginStart="4dp" />
+
+    </LinearLayout>
+
+    <!-- 状态信息 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="8dp"
+        android:background="#e0e0e0">
+
+        <TextView
+            android:id="@+id/tv_stream_info"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="流信息: 无"
+            android:textSize="12sp" />
+
+        <TextView
+            android:id="@+id/tv_record_info"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="录制状态: 未录制"
+            android:textSize="12sp" />
+
+    </LinearLayout>
+
+</LinearLayout>

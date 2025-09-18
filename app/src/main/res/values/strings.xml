@@ -1,0 +1,25 @@
+<resources>
+    <string name="app_name">FFmpeg RTSP Player</string>
+    <string name="single_player">单流播放器</string>
+    <string name="multi_player">多流播放器</string>
+    <string name="connect">连接</string>
+    <string name="play">播放</string>
+    <string name="stop">停止</string>
+    <string name="record">录制</string>
+    <string name="pause">暂停</string>
+    <string name="stop_recording">停止录制</string>
+    <string name="add_stream">添加流</string>
+    <string name="play_all">播放全部</string>
+    <string name="stop_all">停止全部</string>
+    <string name="clear_all">清空全部</string>
+    <string name="remove">删除</string>
+    <string name="rtsp_url_hint">输入RTSP地址</string>
+    <string name="not_connected">未连接</string>
+    <string name="stream_info">流信息</string>
+    <string name="recording_status">录制状态</string>
+    <string name="active_streams">活跃流数量</string>
+    <string name="take_photo">拍照</string>
+    <string name="take_photo_success">拍照成功</string>
+    <string name="take_photo_fail">拍照失败</string>
+    <string name="photo_saved">照片已保存</string>
+</resources>

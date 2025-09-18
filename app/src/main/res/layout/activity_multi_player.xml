@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <!-- 顶部控制栏 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="8dp"
+        android:background="#f0f0f0">
+
+        <EditText
+            android:id="@+id/et_rtsp_url"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="输入RTSP地址"
+            android:text="rtsp://stream.strba.sk:1935/strba/VYHLAD_JAZERO.stream"
+            android:padding="8dp" />
+
+        <Button
+            android:id="@+id/btn_add_stream"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="添加流"
+            android:layout_marginStart="8dp" />
+
+    </LinearLayout>
+
+    <!-- 多流显示区域 -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <LinearLayout
+            android:id="@+id/ll_streams_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="8dp">
+
+            <!-- 流项目将通过代码动态添加 -->
+
+        </LinearLayout>
+
+    </ScrollView>
+
+    <!-- 底部控制栏 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="8dp"
+        android:background="#f0f0f0">
+
+        <Button
+            android:id="@+id/btn_play_all"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="播放全部"
+            android:layout_marginEnd="4dp" />
+
+        <Button
+            android:id="@+id/btn_stop_all"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="停止全部"
+            android:layout_marginStart="4dp"
+            android:layout_marginEnd="4dp" />
+
+        <Button
+            android:id="@+id/btn_clear_all"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="清空全部"
+            android:layout_marginStart="4dp" />
+
+    </LinearLayout>
+
+    <!-- 状态信息 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="8dp"
+        android:background="#e0e0e0">
+
+        <TextView
+            android:id="@+id/tv_stream_count"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="活跃流数量: 0"
+            android:textSize="12sp" />
+
+    </LinearLayout>
+
+</LinearLayout>
