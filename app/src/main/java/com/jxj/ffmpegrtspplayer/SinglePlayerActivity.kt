@@ -1,369 +1,343 @@
-package com.jxj.ffmpegrtspplayer;
+package com.jxj.ffmpegrtspplayer
 
-import android.Manifest;
-import android.content.pm.PackageManager;
-import android.os.Bundle;
-import android.os.Environment;
-import android.util.Log;
-import android.view.Surface;
-import android.view.SurfaceHolder;
-import android.view.SurfaceView;
-import android.view.View;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.TextView;
-import android.widget.Toast;
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Bundle
+import android.os.Environment
+import android.util.Log
+import android.view.SurfaceHolder
+import android.view.SurfaceView
+import android.widget.Button
+import android.widget.EditText
+import android.widget.TextView
+import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import com.jxj.ffmpegrtsp.lib.FFmpegRTSPLibrary
+import java.io.File
+import java.text.SimpleDateFormat
+import java.util.*
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
+class SinglePlayerActivity : AppCompatActivity(), SurfaceHolder.Callback {
 
-import com.jxj.ffmpegrtsp.lib.FFmpegRTSPLibrary;
-
-import java.io.File;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
-
-public class SinglePlayerActivity extends AppCompatActivity implements SurfaceHolder.Callback {
-
-    private static final String TAG = "SinglePlayerActivity";
-    private static final int PERMISSION_REQUEST_CODE = 1001;
-
-    private EditText etRtspUrl;
-    private Button btnConnect, btnPlay, btnStop, btnRecord;
-    private SurfaceView surfaceView;
-    private TextView tvStatus, tvStreamInfo, tvRecordInfo;
-
-    private SurfaceHolder surfaceHolder;
-    private int streamId = -1;
-    private boolean isPlaying = false;
-    private boolean isRecording = false;
-    private String currentRecordPath = "";
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_single_player);
-
-        initViews();
-        setupClickListeners();
-        checkPermissions();
+    companion object {
+        private const val TAG = "SinglePlayerActivity"
+        private const val PERMISSION_REQUEST_CODE = 1001
     }
 
-    private void initViews() {
-        etRtspUrl = findViewById(R.id.et_rtsp_url);
-        btnConnect = findViewById(R.id.btn_connect);
-        btnPlay = findViewById(R.id.btn_play);
-        btnStop = findViewById(R.id.btn_stop);
-        btnRecord = findViewById(R.id.btn_record);
-        surfaceView = findViewById(R.id.surface_view);
-        tvStatus = findViewById(R.id.tv_status);
-        tvStreamInfo = findViewById(R.id.tv_stream_info);
-        tvRecordInfo = findViewById(R.id.tv_record_info);
+    private lateinit var etRtspUrl: EditText
+    private lateinit var btnConnect: Button
+    private lateinit var btnPlay: Button
+    private lateinit var btnStop: Button
+    private lateinit var btnRecord: Button
+    private lateinit var surfaceView: SurfaceView
+    private lateinit var tvStatus: TextView
+    private lateinit var tvStreamInfo: TextView
+    private lateinit var tvRecordInfo: TextView
 
-        surfaceHolder = surfaceView.getHolder();
-        surfaceHolder.addCallback(this);
+    private lateinit var surfaceHolder: SurfaceHolder
+    private var streamId = -1
+    private var isPlaying = false
+    private var isRecording = false
+    private var currentRecordPath = ""
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_single_player)
+
+        initViews()
+        setupClickListeners()
+        checkPermissions()
     }
 
-    private void setupClickListeners() {
-        btnConnect.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                connectStream();
-            }
-        });
+    private fun initViews() {
+        etRtspUrl = findViewById(R.id.et_rtsp_url)
+        btnConnect = findViewById(R.id.btn_connect)
+        btnPlay = findViewById(R.id.btn_play)
+        btnStop = findViewById(R.id.btn_stop)
+        btnRecord = findViewById(R.id.btn_record)
+        surfaceView = findViewById(R.id.surface_view)
+        tvStatus = findViewById(R.id.tv_status)
+        tvStreamInfo = findViewById(R.id.tv_stream_info)
+        tvRecordInfo = findViewById(R.id.tv_record_info)
 
-        btnPlay.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                playStream();
-            }
-        });
-
-        btnStop.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                stopStream();
-            }
-        });
-
-        btnRecord.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                toggleRecording();
-            }
-        });
+        surfaceHolder = surfaceView.holder
+        surfaceHolder.addCallback(this)
     }
 
-    private void checkPermissions() {
+    private fun setupClickListeners() {
+        btnConnect.setOnClickListener {
+            connectStream()
+        }
+
+        btnPlay.setOnClickListener {
+            playStream()
+        }
+
+        btnStop.setOnClickListener {
+            stopStream()
+        }
+
+        btnRecord.setOnClickListener {
+            toggleRecording()
+        }
+    }
+
+    private fun checkPermissions() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                    PERMISSION_REQUEST_CODE);
+            != PackageManager.PERMISSION_GRANTED
+        ) {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
+                PERMISSION_REQUEST_CODE
+            )
         }
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == PERMISSION_REQUEST_CODE) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                Toast.makeText(this, "权限已授予", Toast.LENGTH_SHORT).show();
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(this, "权限已授予", Toast.LENGTH_SHORT).show()
             } else {
-                Toast.makeText(this, "需要存储权限才能录制视频", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, "需要存储权限才能录制视频", Toast.LENGTH_LONG).show()
             }
         }
     }
 
-    private void connectStream() {
-        String url = etRtspUrl.getText().toString().trim();
+    private fun connectStream() {
+        val url = etRtspUrl.text.toString().trim()
         if (url.isEmpty()) {
-            Toast.makeText(this, "请输入RTSP地址", Toast.LENGTH_SHORT).show();
-            return;
+            Toast.makeText(this, "请输入RTSP地址", Toast.LENGTH_SHORT).show()
+            return
         }
 
         // 创建流
-        streamId = FFmpegRTSPLibrary.createStream(url, 1280, 720, 30, 2000000, "h264");
+        streamId = FFmpegRTSPLibrary.createStream(url, 1280, 720, 30, 2000000, "h264")
         if (streamId >= 0) {
-            updateStatus("流已创建，ID: " + streamId);
-            updateStreamInfo("URL: " + url);
-            btnPlay.setEnabled(true);
-            btnStop.setEnabled(true);
-            btnRecord.setEnabled(true);
+            updateStatus("流已创建，ID: $streamId")
+            updateStreamInfo("URL: $url")
+            btnPlay.isEnabled = true
+            btnStop.isEnabled = true
+            btnRecord.isEnabled = true
         } else {
-            updateStatus("创建流失败");
-            Toast.makeText(this, "创建流失败", Toast.LENGTH_SHORT).show();
+            updateStatus("创建流失败")
+            Toast.makeText(this, "创建流失败", Toast.LENGTH_SHORT).show()
         }
-        FFmpegRTSPLibrary.setSurface(streamId, surfaceView.getHolder().getSurface());
+        FFmpegRTSPLibrary.setSurface(streamId, surfaceView.holder.surface)
     }
 
-    private void playStream() {
+    private fun playStream() {
         if (streamId < 0) {
-            Toast.makeText(this, "请先连接流", Toast.LENGTH_SHORT).show();
-            return;
+            Toast.makeText(this, "请先连接流", Toast.LENGTH_SHORT).show()
+            return
         }
 
         if (!isPlaying) {
-            FFmpegRTSPLibrary.startPlayAsync(streamId, new FFmpegRTSPLibrary.PlaybackCallback() {
-                @Override
-                public void onPlaybackStarted(int streamId) {
-                    runOnUiThread(() -> {
-                        isPlaying = true;
-                        updateStatus("正在播放");
-                        btnPlay.setText("暂停");
-                        Toast.makeText(SinglePlayerActivity.this, "开始播放", Toast.LENGTH_SHORT).show();
-                    });
+            FFmpegRTSPLibrary.startPlayAsync(streamId, object : FFmpegRTSPLibrary.PlaybackCallback {
+                override fun onPlaybackStarted(streamId: Int) {
+                    runOnUiThread {
+                        isPlaying = true
+                        updateStatus("正在播放")
+                        btnPlay.text = "暂停"
+                        Toast.makeText(this@SinglePlayerActivity, "开始播放", Toast.LENGTH_SHORT).show()
+                    }
                 }
 
-                @Override
-                public void onPlaybackStopped(int streamId) {
-                    runOnUiThread(() -> {
-                        isPlaying = false;
-                        updateStatus("已停止");
-                        btnPlay.setText("播放");
-                        Toast.makeText(SinglePlayerActivity.this, "停止播放", Toast.LENGTH_SHORT).show();
-                    });
+                override fun onPlaybackStopped(streamId: Int) {
+                    runOnUiThread {
+                        isPlaying = false
+                        updateStatus("已停止")
+                        btnPlay.text = "播放"
+                        Toast.makeText(this@SinglePlayerActivity, "停止播放", Toast.LENGTH_SHORT).show()
+                    }
                 }
 
-                @Override
-                public void onPlaybackError(int streamId, int errorCode, String errorMessage) {
-                    runOnUiThread(() -> {
-                        isPlaying = false;
-                        updateStatus("播放错误: " + errorMessage);
-                        btnPlay.setText("播放");
-                        Toast.makeText(SinglePlayerActivity.this, "播放错误: " + errorMessage, Toast.LENGTH_LONG).show();
-                    });
+                override fun onPlaybackError(streamId: Int, errorCode: Int, errorMessage: String) {
+                    runOnUiThread {
+                        isPlaying = false
+                        updateStatus("播放错误: $errorMessage")
+                        btnPlay.text = "播放"
+                        Toast.makeText(this@SinglePlayerActivity, "播放错误: $errorMessage", Toast.LENGTH_LONG).show()
+                    }
                 }
 
-                @Override
-                public void onPlaybackInfo(int streamId, String info) {
-                    runOnUiThread(() -> {
-                        updateStreamInfo(info);
-                    });
+                override fun onPlaybackInfo(streamId: Int, info: String) {
+                    runOnUiThread {
+                        updateStreamInfo(info)
+                    }
                 }
-            });
+            })
         } else {
-            stopStream();
+            stopStream()
         }
     }
 
-    private void stopStream() {
+    private fun stopStream() {
         if (streamId >= 0 && isPlaying) {
-            FFmpegRTSPLibrary.stopPlayAsync(streamId, new FFmpegRTSPLibrary.PlaybackCallback() {
-                @Override
-                public void onPlaybackStarted(int streamId) {}
+            FFmpegRTSPLibrary.stopPlayAsync(streamId, object : FFmpegRTSPLibrary.PlaybackCallback {
+                override fun onPlaybackStarted(streamId: Int) {}
 
-                @Override
-                public void onPlaybackStopped(int streamId) {
-                    runOnUiThread(() -> {
-                        isPlaying = false;
-                        updateStatus("已停止");
-                        btnPlay.setText("播放");
-                    });
+                override fun onPlaybackStopped(streamId: Int) {
+                    runOnUiThread {
+                        isPlaying = false
+                        updateStatus("已停止")
+                        btnPlay.text = "播放"
+                    }
                 }
 
-                @Override
-                public void onPlaybackError(int streamId, int errorCode, String errorMessage) {
-                    runOnUiThread(() -> {
-                        isPlaying = false;
-                        updateStatus("停止错误: " + errorMessage);
-                        btnPlay.setText("播放");
-                    });
+                override fun onPlaybackError(streamId: Int, errorCode: Int, errorMessage: String) {
+                    runOnUiThread {
+                        isPlaying = false
+                        updateStatus("停止错误: $errorMessage")
+                        btnPlay.text = "播放"
+                    }
                 }
 
-                @Override
-                public void onPlaybackInfo(int streamId, String info) {}
-            });
+                override fun onPlaybackInfo(streamId: Int, info: String) {}
+            })
         }
     }
 
-    private void toggleRecording() {
+    private fun toggleRecording() {
         if (streamId < 0) {
-            Toast.makeText(this, "请先连接流", Toast.LENGTH_SHORT).show();
-            return;
+            Toast.makeText(this, "请先连接流", Toast.LENGTH_SHORT).show()
+            return
         }
 
         if (!isRecording) {
-            startRecording();
+            startRecording()
         } else {
-            stopRecording();
+            stopRecording()
         }
     }
 
-    private void startRecording() {
+    private fun startRecording() {
         // 创建录制文件路径
-        String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date());
-        String fileName = "rtsp_record_" + timestamp + ".mp4";
-        File recordDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES), "RTSPRecords");
+        val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+        val fileName = "rtsp_record_$timestamp.mp4"
+        val recordDir = File(
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES),
+            "RTSPRecords"
+        )
         if (!recordDir.exists()) {
-            recordDir.mkdirs();
+            recordDir.mkdirs()
         }
-        currentRecordPath = new File(recordDir, fileName).getAbsolutePath();
+        currentRecordPath = File(recordDir, fileName).absolutePath
 
-        FFmpegRTSPLibrary.startRecordingAsync(streamId, currentRecordPath, new FFmpegRTSPLibrary.RecordingCallback() {
-            @Override
-            public void onRecordingStarted(int streamId, String outputPath) {
-                runOnUiThread(() -> {
-                    isRecording = true;
-                    updateRecordInfo("正在录制: " + fileName);
-                    btnRecord.setText("停止录制");
-                    Toast.makeText(SinglePlayerActivity.this, "开始录制", Toast.LENGTH_SHORT).show();
-                });
+        FFmpegRTSPLibrary.startRecordingAsync(streamId, currentRecordPath, object : FFmpegRTSPLibrary.RecordingCallback {
+            override fun onRecordingStarted(streamId: Int, outputPath: String) {
+                runOnUiThread {
+                    isRecording = true
+                    updateRecordInfo("正在录制: $fileName")
+                    btnRecord.text = "停止录制"
+                    Toast.makeText(this@SinglePlayerActivity, "开始录制", Toast.LENGTH_SHORT).show()
+                }
             }
 
-            @Override
-            public void onRecordingStopped(int streamId) {
-                runOnUiThread(() -> {
-                    isRecording = false;
-                    updateRecordInfo("录制完成: " + currentRecordPath);
-                    btnRecord.setText("录制");
-                    Toast.makeText(SinglePlayerActivity.this, "录制完成", Toast.LENGTH_SHORT).show();
-                });
+            override fun onRecordingStopped(streamId: Int) {
+                runOnUiThread {
+                    isRecording = false
+                    updateRecordInfo("录制完成: $currentRecordPath")
+                    btnRecord.text = "录制"
+                    Toast.makeText(this@SinglePlayerActivity, "录制完成", Toast.LENGTH_SHORT).show()
+                }
             }
 
-            @Override
-            public void onRecordingError(int streamId, int errorCode, String errorMessage) {
-                runOnUiThread(() -> {
-                    isRecording = false;
-                    updateRecordInfo("录制错误: " + errorMessage);
-                    btnRecord.setText("录制");
-                    Toast.makeText(SinglePlayerActivity.this, "录制错误: " + errorMessage, Toast.LENGTH_LONG).show();
-                });
+            override fun onRecordingError(streamId: Int, errorCode: Int, errorMessage: String) {
+                runOnUiThread {
+                    isRecording = false
+                    updateRecordInfo("录制错误: $errorMessage")
+                    btnRecord.text = "录制"
+                    Toast.makeText(this@SinglePlayerActivity, "录制错误: $errorMessage", Toast.LENGTH_LONG).show()
+                }
             }
 
-            @Override
-            public void onRecordingProgress(int streamId, long duration, long fileSize) {
-                runOnUiThread(() -> {
-                    updateRecordInfo("录制中: " + (duration / 1000) + "s, 大小: " + (fileSize / 1024) + "KB");
-                });
+            override fun onRecordingProgress(streamId: Int, duration: Long, fileSize: Long) {
+                runOnUiThread {
+                    updateRecordInfo("录制中: ${duration / 1000}s, 大小: ${fileSize / 1024}KB")
+                }
             }
-        });
+        })
     }
 
-    private void stopRecording() {
+    private fun stopRecording() {
         if (streamId >= 0 && isRecording) {
-            FFmpegRTSPLibrary.stopRecordingAsync(streamId, new FFmpegRTSPLibrary.RecordingCallback() {
-                @Override
-                public void onRecordingStarted(int streamId, String outputPath) {}
+            FFmpegRTSPLibrary.stopRecordingAsync(streamId, object : FFmpegRTSPLibrary.RecordingCallback {
+                override fun onRecordingStarted(streamId: Int, outputPath: String) {}
 
-                @Override
-                public void onRecordingStopped(int streamId) {
-                    runOnUiThread(() -> {
-                        isRecording = false;
-                        updateRecordInfo("录制已停止");
-                        btnRecord.setText("录制");
-                    });
+                override fun onRecordingStopped(streamId: Int) {
+                    runOnUiThread {
+                        isRecording = false
+                        updateRecordInfo("录制已停止")
+                        btnRecord.text = "录制"
+                    }
                 }
 
-                @Override
-                public void onRecordingError(int streamId, int errorCode, String errorMessage) {
-                    runOnUiThread(() -> {
-                        isRecording = false;
-                        updateRecordInfo("停止录制错误: " + errorMessage);
-                        btnRecord.setText("录制");
-                    });
+                override fun onRecordingError(streamId: Int, errorCode: Int, errorMessage: String) {
+                    runOnUiThread {
+                        isRecording = false
+                        updateRecordInfo("停止录制错误: $errorMessage")
+                        btnRecord.text = "录制"
+                    }
                 }
 
-                @Override
-                public void onRecordingProgress(int streamId, long duration, long fileSize) {}
-            });
+                override fun onRecordingProgress(streamId: Int, duration: Long, fileSize: Long) {}
+            })
         }
     }
 
-    private void updateStatus(String status) {
-        tvStatus.setText(status);
-        Log.d(TAG, "Status: " + status);
+    private fun updateStatus(status: String) {
+        tvStatus.text = status
+        Log.d(TAG, "Status: $status")
     }
 
-    private void updateStreamInfo(String info) {
-        tvStreamInfo.setText("流信息: " + info);
+    private fun updateStreamInfo(info: String) {
+        tvStreamInfo.text = "流信息: $info"
     }
 
-    private void updateRecordInfo(String info) {
-        tvRecordInfo.setText("录制状态: " + info);
+    private fun updateRecordInfo(info: String) {
+        tvRecordInfo.text = "录制状态: $info"
     }
 
-    @Override
-    public void surfaceCreated(@NonNull SurfaceHolder holder) {
-        Log.d(TAG, "Surface created");
+    override fun surfaceCreated(holder: SurfaceHolder) {
+        Log.d(TAG, "Surface created")
         if (streamId >= 0) {
-            FFmpegRTSPLibrary.setSurface(streamId, holder.getSurface());
+            FFmpegRTSPLibrary.setSurface(streamId, holder.surface)
         }
     }
 
-    @Override
-    public void surfaceChanged(@NonNull SurfaceHolder holder, int format, int width, int height) {
-        Log.d(TAG, "Surface changed: " + width + "x" + height);
+    override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
+        Log.d(TAG, "Surface changed: ${width}x$height")
     }
 
-    @Override
-    public void surfaceDestroyed(@NonNull SurfaceHolder holder) {
-        Log.d(TAG, "Surface destroyed");
+    override fun surfaceDestroyed(holder: SurfaceHolder) {
+        Log.d(TAG, "Surface destroyed")
         if (streamId >= 0) {
-            FFmpegRTSPLibrary.onSurfaceDestroyed(streamId);
+            FFmpegRTSPLibrary.onSurfaceDestroyed(streamId)
         }
     }
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
+    override fun onDestroy() {
+        super.onDestroy()
         if (streamId >= 0) {
-            FFmpegRTSPLibrary.destroyAllStreamsAsync();
+            FFmpegRTSPLibrary.destroyAllStreamsAsync()
         }
     }
 
-    @Override
-    protected void onPause() {
-        super.onPause();
-        FFmpegRTSPLibrary.onAppBackground();
+    override fun onPause() {
+        super.onPause()
+        FFmpegRTSPLibrary.onAppBackground()
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        FFmpegRTSPLibrary.onAppForeground();
+    override fun onResume() {
+        super.onResume()
+        FFmpegRTSPLibrary.onAppForeground()
     }
 }
