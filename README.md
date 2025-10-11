@@ -18,10 +18,10 @@
 <div align="center">
 
 ### 多流播放界面
-<img src="screenshot/MuMu-20251011-153144-611.png" alt="多流播放界面" width="300"/>
+<img src="screenshot/MuMu-20251011-155352-156.png" alt="多流播放界面" width="300"/>
 
 ### 单流播放界面  
-<img src="screenshot/MuMu-20251011-153312-975.png" alt="单流播放界面" width="300"/>
+<img src="screenshot/MuMu-20251011-153144-611.png" alt="单流播放界面" width="300"/>
 
 </div>
 
