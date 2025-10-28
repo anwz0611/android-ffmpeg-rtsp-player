@@ -67,25 +67,17 @@ FfmpegRtspPlayer 是一个基于 FFmpeg 6.1.1 编译的 Android RTSP 播放器�
 
 ### 🔧 技术栈
 - **核心库**: FFmpeg 6.1.1 (C++20 编译)
-- **开发语言**: Java 11 + C++20
 - **最低支持**: Android API 24 (Android 7.0)
-- **架构支持**: arm64-v8a (主要), armeabi-v7a
 - **16kb 适配**: 支持 16kb 页面大小设备，兼容性更强
 
 ### ⚡ 性能优化
 - **零拷贝技术**: 直接内存映射，减少数据拷贝
 - **硬件加速**: MediaCodec 硬件解码 + NEON SIMD 优化
 - **智能缓冲**: 最小化延迟的缓冲算法
-- **线程池**: 专用线程池处理不同任务类型
 - **内存管理**: RAII + 智能指针，自动资源管理
 
 ## 快速开始
 
-### 环境要求
-
-- Android Studio 4.0+
-- Android SDK API 24+
-- NDK (用于原生库编译)
 
 ### 集成步骤
 
@@ -102,11 +94,6 @@ FfmpegRtspPlayer 是一个基于 FFmpeg 6.1.1 编译的 Android RTSP 播放器�
    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-   ```
-
-3. **导入库**
-   ```java
-   import com.jxj.ffmpegrtsp.lib.FFmpegRTSPLibrary;
    ```
 
 ### 解码模式选择
@@ -341,8 +328,6 @@ protected void onDestroy() {
 
 ### 容器格式
 - RTSP
-- RTMP
-- UDP
 
 ## 版本信息
 
@@ -359,9 +344,6 @@ protected void onDestroy() {
 3. 建议在真机上测试以获得最佳性能
 4. 录制功能需要存储权限
 
-## 商业用途
-
-本项目基于 FFmpeg 开源项目开发，遵循 GPL 许可证。如需用于商业用途，请联系作者获取商业许可证。
 
 ### 联系方式
 - **作者**: JXJ
@@ -371,11 +353,6 @@ protected void onDestroy() {
 ## 许可证
 
 本项目基于 GPL v2 许可证开源。商业使用请联系作者获取相应授权。
-
-## 致谢
-
-感谢 FFmpeg 开源社区提供的优秀多媒体处理框架，以及所有为项目贡献代码的开发者。
-
 ---
 
 **注意**: 本项目仅供学习和研究使用，商业用途请联系作者获取授权。
