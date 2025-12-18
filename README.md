@@ -7,6 +7,7 @@
 <div align="center">
 <img src="screenshot/MuMu-20251011-155352-156.png" alt="多流播放" width="280"/>
 <img src="screenshot/MuMu-20251011-153144-611.png" alt="单流播放" width="280"/>
+<img src="screenshot/MuMu-20251218-104858-750.png" alt="YUV示例" width="280"/>
 </div>
 
 ## 特性
