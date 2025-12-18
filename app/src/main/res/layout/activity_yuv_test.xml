@@ -1,0 +1,338 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#1A1A2E">
+
+    <!-- 视频预览区域 -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:background="#000000">
+
+        <SurfaceView
+            android:id="@+id/videoSurface"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+    </FrameLayout>
+
+    <!-- 控制面板 -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1.5"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="8dp">
+
+            <!-- URL 输入 -->
+            <EditText
+                android:id="@+id/urlEditText"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:hint="输入 RTSP URL"
+                android:textSize="12sp"
+                android:background="@drawable/edit_text_bg"
+                android:textColor="#E0E0E0"
+                android:textColorHint="#808080"
+                android:paddingHorizontal="8dp"
+                android:singleLine="true" />
+
+            <!-- 流控制按钮 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/createStreamButton"
+                    android:layout_width="0dp"
+                    android:layout_height="36dp"
+                    android:layout_weight="1"
+                    android:text="创建"
+                    android:textSize="11sp"
+                    android:backgroundTint="#4CAF50"
+                    android:layout_marginEnd="2dp" />
+
+                <Button
+                    android:id="@+id/startStreamButton"
+                    android:layout_width="0dp"
+                    android:layout_height="36dp"
+                    android:layout_weight="1"
+                    android:text="启动"
+                    android:textSize="11sp"
+                    android:backgroundTint="#2196F3"
+                    android:layout_marginHorizontal="2dp" />
+
+                <Button
+                    android:id="@+id/stopStreamButton"
+                    android:layout_width="0dp"
+                    android:layout_height="36dp"
+                    android:layout_weight="1"
+                    android:text="停止"
+                    android:textSize="11sp"
+                    android:backgroundTint="#FF9800"
+                    android:layout_marginHorizontal="2dp" />
+
+                <Button
+                    android:id="@+id/destroyStreamButton"
+                    android:layout_width="0dp"
+                    android:layout_height="36dp"
+                    android:layout_weight="1"
+                    android:text="销毁"
+                    android:textSize="11sp"
+                    android:backgroundTint="#F44336"
+                    android:layout_marginStart="2dp" />
+            </LinearLayout>
+
+            <!-- 分隔标题: 模式1 只读观察 -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="👁️ 模式1: 只读观察 (OBSERVE_ONLY)"
+                android:textColor="#81D4FA"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/registerObserverButton"
+                    android:layout_width="0dp"
+                    android:layout_height="34dp"
+                    android:layout_weight="1"
+                    android:text="注册观察"
+                    android:textSize="11sp"
+                    android:backgroundTint="#03A9F4"
+                    android:layout_marginEnd="4dp" />
+
+                <Button
+                    android:id="@+id/unregisterObserverButton"
+                    android:layout_width="0dp"
+                    android:layout_height="34dp"
+                    android:layout_weight="1"
+                    android:text="注销观察"
+                    android:textSize="11sp"
+                    android:backgroundTint="#607D8B"
+                    android:layout_marginStart="4dp" />
+            </LinearLayout>
+
+            <!-- 分隔标题: 模式2 滤镜处理 -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="🎨 模式2: 滤镜处理 (PROCESS_AND_RENDER)"
+                android:textColor="#CE93D8"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/registerFilterButton"
+                    android:layout_width="0dp"
+                    android:layout_height="34dp"
+                    android:layout_weight="1"
+                    android:text="注册滤镜"
+                    android:textSize="11sp"
+                    android:backgroundTint="#9C27B0"
+                    android:layout_marginEnd="4dp" />
+
+                <Button
+                    android:id="@+id/unregisterFilterButton"
+                    android:layout_width="0dp"
+                    android:layout_height="34dp"
+                    android:layout_weight="1"
+                    android:text="注销滤镜"
+                    android:textSize="11sp"
+                    android:backgroundTint="#607D8B"
+                    android:layout_marginStart="4dp" />
+            </LinearLayout>
+
+            <!-- 分隔标题: 模式3 自定义渲染 -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="🖥️ 模式3: 自定义渲染 (CUSTOM_RENDER_ONLY)"
+                android:textColor="#FFCC80"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/registerCustomButton"
+                    android:layout_width="0dp"
+                    android:layout_height="34dp"
+                    android:layout_weight="1"
+                    android:text="注册自定义"
+                    android:textSize="11sp"
+                    android:backgroundTint="#FF9800"
+                    android:layout_marginEnd="4dp" />
+
+                <Button
+                    android:id="@+id/unregisterCustomButton"
+                    android:layout_width="0dp"
+                    android:layout_height="34dp"
+                    android:layout_weight="1"
+                    android:text="注销自定义"
+                    android:textSize="11sp"
+                    android:backgroundTint="#607D8B"
+                    android:layout_marginStart="4dp" />
+            </LinearLayout>
+
+            <!-- 渲染控制 -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="⚙️ 渲染控制"
+                android:textColor="#A5D6A7"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/enableRenderButton"
+                    android:layout_width="0dp"
+                    android:layout_height="34dp"
+                    android:layout_weight="1"
+                    android:text="启用渲染"
+                    android:textSize="11sp"
+                    android:backgroundTint="#4CAF50"
+                    android:layout_marginEnd="2dp" />
+
+                <Button
+                    android:id="@+id/disableRenderButton"
+                    android:layout_width="0dp"
+                    android:layout_height="34dp"
+                    android:layout_weight="1"
+                    android:text="禁用渲染"
+                    android:textSize="11sp"
+                    android:backgroundTint="#795548"
+                    android:layout_marginHorizontal="2dp" />
+
+                <Button
+                    android:id="@+id/clearProcessorsButton"
+                    android:layout_width="0dp"
+                    android:layout_height="34dp"
+                    android:layout_weight="1"
+                    android:text="清空处理器"
+                    android:textSize="11sp"
+                    android:backgroundTint="#E91E63"
+                    android:layout_marginStart="2dp" />
+            </LinearLayout>
+
+            <!-- 状态信息区域 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:orientation="vertical"
+                android:background="#16213E"
+                android:padding="6dp">
+
+                <TextView
+                    android:id="@+id/statusTextView"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="状态: 未创建流"
+                    android:textColor="#E0E0E0"
+                    android:textSize="11sp" />
+
+                <TextView
+                    android:id="@+id/processorStatusTextView"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="📋 处理器状态: 无"
+                    android:textColor="#B0BEC5"
+                    android:textSize="11sp" />
+
+                <TextView
+                    android:id="@+id/frameCountTextView"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="帧数: 0"
+                    android:textColor="#FFC107"
+                    android:textSize="11sp" />
+
+                <TextView
+                    android:id="@+id/frameInfoTextView"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="帧: -"
+                    android:textColor="#81C784"
+                    android:textSize="11sp" />
+
+                <TextView
+                    android:id="@+id/yuvDataTextView"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="YUV: -"
+                    android:textColor="#64B5F6"
+                    android:textSize="11sp" />
+            </LinearLayout>
+
+            <!-- 日志区域 -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="📝 日志"
+                android:textColor="#90A4AE"
+                android:textSize="11sp" />
+
+            <ScrollView
+                android:id="@+id/logScrollView"
+                android:layout_width="match_parent"
+                android:layout_height="100dp"
+                android:layout_marginTop="2dp"
+                android:background="#0F0F1A"
+                android:padding="4dp">
+
+                <TextView
+                    android:id="@+id/logTextView"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="monospace"
+                    android:textColor="#8BC34A"
+                    android:textSize="9sp" />
+            </ScrollView>
+
+        </LinearLayout>
+    </ScrollView>
+
+</LinearLayout>
+

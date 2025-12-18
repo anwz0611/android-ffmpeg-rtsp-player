@@ -119,7 +119,7 @@ class SinglePlayerActivity : AppCompatActivity(), SurfaceHolder.Callback {
         }
 
         // 创建流（useSoftwareDecode=false 硬解码）
-        streamId = FFmpegRTSPLibrary.createStreamWithDecodeMode(url, false)
+        streamId = FFmpegRTSPLibrary.createStreamWithDecodeMode(url, true)
         if (streamId >= 0) {
             updateStatus("流已创建，ID: $streamId")
             updateStreamInfo("URL: $url")

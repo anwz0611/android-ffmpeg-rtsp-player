@@ -27,6 +27,15 @@
         android:layout_width="match_parent"
         android:layout_height="60dp"
         android:text="多流播放器"
-        android:textSize="18sp" />
+        android:textSize="18sp"
+        android:layout_marginBottom="16dp" />
+
+    <Button
+        android:id="@+id/btn_yuv_test"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:text="YUV 数据测试"
+        android:textSize="18sp"
+        android:backgroundTint="#9C27B0" />
 
 </LinearLayout>

@@ -38,6 +38,11 @@
             android:name=".MultiPlayerActivity"
             android:exported="false"
             android:screenOrientation="portrait" />
+        <activity
+            android:name=".YUVTestActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:label="YUV 数据测试" />
     </application>
 
 </manifest>

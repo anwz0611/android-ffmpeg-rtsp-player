@@ -1,475 +1,142 @@
 # FFmpegStreamPlayer
 
-<div align="center">
+基于 FFmpeg 6.1.1 的 Android 多协议流媒体播放器，支持 RTSP/RTMP/HLS/HTTP-FLV 等主流协议。
 
-![FFmpeg](https://img.shields.io/badge/FFmpeg-6.1.1-green.svg)
-![C++](https://img.shields.io/badge/C%2B%2B-20-blue.svg)
-![Android](https://img.shields.io/badge/Android-API%2024%2B-brightgreen.svg)
-![License](https://img.shields.io/badge/License-GPL%20v2-orange.svg)
-
-**🚀 基于 FFmpeg 6.1.1 + C++20 的 Android 多协议流媒体播放器**
-
-*100ms 级延迟 | 16 路并发 | 零拷贝渲染 | 硬件加速 | 多协议支持 | 16kb 适配*
-
-</div>
-
-## 📱 应用截图
+## 截图
 
 <div align="center">
-
-### 多流播放界面
-<img src="screenshot/MuMu-20251011-155352-156.png" alt="多流播放界面" width="300"/>
-
-### 单流播放界面
-<img src="screenshot/MuMu-20251011-153144-611.png" alt="单流播放界面" width="300"/>
-
+<img src="screenshot/MuMu-20251011-155352-156.png" alt="多流播放" width="280"/>
+<img src="screenshot/MuMu-20251011-153144-611.png" alt="单流播放" width="280"/>
 </div>
 
----
+## 特性
 
-## ✨ 核心优势
+- 超低延迟：硬件解码 100ms 级，软件解码 200ms 级
+- 多流并发：最高支持 16 路同时播放
+- 双解码模式：硬件解码/软件解码可选
+- 零拷贝渲染：直接内存映射
+- 实时录制：边播边录，质量无损
+- YUV 数据暴露：支持自定义帧处理
+- 16kb 页面适配
 
-🔥 **超低延迟**: 硬件解码 100ms 级，软件解码 200ms 级  
-⚡ **零拷贝**: 直接内存映射，性能极致  
-📱 **多流并发**: 支持 16 路同时播放  
-🎥 **实时录制**: 零延迟录制，质量无损  
-🔧 **易于集成**: 一行代码创建流  
-🎯 **双解码模式**: 硬件解码 + 软件解码，灵活选择  
-💾 **16kb 适配**: 支持 16kb 页面大小设备，兼容性更强
+## 支持协议
 
-## 项目简介
-
-FFmpegStreamPlayer 是一个基于 FFmpeg 6.1.1 编译的 Android 多协议流媒体播放器。该播放器支持 RTSP、RTMP、HTTP、HLS、HTTP-FLV、RTP 等多种流媒体协议，专为实时视频流播放设计，具有超低延迟特性，支持多流同时播放和视频录制功能。
-
-## 适用场景
-
-### 🎯 实时监控系统
-- **安防监控**: 实时查看多路摄像头画面
-- **工业监控**: 生产线实时监控，异常快速响应
-- **交通监控**: 路口、高速公路实时监控
-
-### 📱 移动应用
-- **视频会议**: 低延迟视频通话
-- **直播应用**: 实时直播推流和播放
-- **远程控制**: 无人机、机器人远程操控
-
-### 🏢 企业应用
-- **视频会议系统**: 企业内部会议
-- **远程培训**: 在线教育实时互动
-- **医疗远程**: 远程医疗诊断
-
-### 🔧 开发集成
-- **SDK 集成**: 快速集成到现有应用
-- **定制开发**: 根据需求定制功能
-- **性能优化**: 替代系统播放器获得更好性能
-
-## 技术特性
-
-### 🔧 技术栈
-- **核心库**: FFmpeg 6.1.1 (C++20 编译)
-- **最低支持**: Android API 24 (Android 7.0)
-- **16kb 适配**: 支持 16kb 页面大小设备，兼容性更强
-
-### ⚡ 性能优化
-- **零拷贝技术**: 直接内存映射，减少数据拷贝
-- **硬件加速**: MediaCodec 硬件解码 + NEON SIMD 优化
-- **智能缓冲**: 最小化延迟的缓冲算法
-- **内存管理**: RAII + 智能指针，自动资源管理
+RTSP、RTMP、HTTP、HLS、HTTP-FLV、RTP、UDP、TCP
 
 ## 快速开始
 
+### 1. 引入库
 
-### 集成步骤
-
-1. **添加 AAR 库**
-   ```kotlin
-   dependencies {
-       implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.aar"))))
-   }
-   ```
-
-2. **配置权限**
-   ```xml
-   <uses-permission android:name="android.permission.INTERNET" />
-   <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-   <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-   <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-   ```
-
-### 解码模式选择（精简版）
-
-#### 硬件解码模式（默认）
-- **优势**: 延迟最低（80-120ms），CPU占用少（<10%），功耗低
-- **适用场景**: 现代Android设备，对延迟要求极高的应用
-- **限制**: 依赖设备硬件支持，部分老旧设备可能不支持
-
-#### 软件解码模式
-- **优势**: 兼容性最强，支持所有Android设备，解码质量稳定
-- **适用场景**: 老旧设备，对兼容性要求高的应用，调试和测试
-- **限制**: 延迟稍高（120-200ms），CPU占用较高（<30%）
-
-#### 使用建议
-```java
-// 推荐：优先使用硬件解码（默认）
-int streamId = FFmpegRTSPLibrary.createStream(url);
-
-// 明确指定：需要软件解码时
-int streamId = FFmpegRTSPLibrary.createStreamWithDecodeMode(url, true);
-
-// 明确指定：需要硬件解码时
-int streamId = FFmpegRTSPLibrary.createStreamWithDecodeMode(url, false);
+```kotlin
+dependencies {
+    implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.aar"))))
+}
 ```
 
-### 基本使用
+### 2. 添加权限
 
-> ⚠️ **重要提示**: 强烈建议使用异步方法（`*Async`），避免阻塞主线程，提升用户体验。
+```xml
+<uses-permission android:name="android.permission.INTERNET" />
+<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+```
 
-#### 单流播放（推荐：异步方式）
+### 3. 基本用法
+
 ```java
-// 1. 创建流（默认硬件解码）
-// 支持多种协议：RTSP, RTMP, HTTP, HLS, HTTP-FLV, RTP 等
-String streamUrl = "rtsp://your-server:554/stream";  // RTSP
-// String streamUrl = "rtmp://your-server:1935/live/stream";  // RTMP
-// String streamUrl = "http://your-server/video.mp4";  // HTTP
-// String streamUrl = "http://your-server/playlist.m3u8";  // HLS
-// String streamUrl = "http://your-server/stream.flv";  // HTTP-FLV
+// 创建流
+int streamId = FFmpegRTSPLibrary.createStream("rtsp://your-server/stream");
 
-int streamId = FFmpegRTSPLibrary.createStream(streamUrl);
-
-// 或者指定解码模式
-int streamId = FFmpegRTSPLibrary.createStreamWithDecodeMode(streamUrl, false); // 硬件解码
-int streamId = FFmpegRTSPLibrary.createStreamWithDecodeMode(streamUrl, true);  // 软件解码
-
-// 2. 设置Surface
-SurfaceView surfaceView = findViewById(R.id.surface_view);
+// 绑定 Surface
 FFmpegRTSPLibrary.setSurface(streamId, surfaceView.getHolder().getSurface());
 
-// 3. 开始播放（✅ 推荐：异步方式，不阻塞主线程）
-FFmpegRTSPLibrary.startPlayAsync(streamId, new FFmpegRTSPLibrary.PlaybackCallback() {
-    @Override
-    public void onPlaybackStarted(int streamId) {
-        // 播放开始回调
-        runOnUiThread(() -> {
-            // 更新UI
-            Log.d(TAG, "播放开始: streamId=" + streamId);
-        });
-    }
-    
-    @Override
-    public void onPlaybackStopped(int streamId) {
-        // 播放停止回调
-        runOnUiThread(() -> {
-            Log.d(TAG, "播放停止: streamId=" + streamId);
-        });
-    }
-    
-    @Override
-    public void onPlaybackError(int streamId, int errorCode, String errorMessage) {
-        // 播放错误回调
-        runOnUiThread(() -> {
-            Log.e(TAG, "播放错误: streamId=" + streamId + ", error=" + errorMessage);
-        });
-    }
-});
+// 异步播放（推荐）
+FFmpegRTSPLibrary.startPlayAsync(streamId, callback);
 
-// 4. 停止播放（✅ 推荐：异步方式）
+// 停止 & 销毁
 FFmpegRTSPLibrary.stopPlayAsync(streamId, callback);
-
-// 5. 销毁流
 FFmpegRTSPLibrary.destroyStream(streamId);
 ```
 
-#### 多协议示例
+软件解码：
 ```java
-// RTSP 流
-String rtspUrl = "rtsp://your-server:554/stream";
-int rtspStreamId = FFmpegRTSPLibrary.createStream(rtspUrl);
-
-// RTMP 流
-String rtmpUrl = "rtmp://your-server:1935/live/stream";
-int rtmpStreamId = FFmpegRTSPLibrary.createStream(rtmpUrl);
-
-// HTTP 流
-String httpUrl = "http://your-server/video.mp4";
-int httpStreamId = FFmpegRTSPLibrary.createStream(httpUrl);
-
-// HLS 流
-String hlsUrl = "http://your-server/playlist.m3u8";
-int hlsStreamId = FFmpegRTSPLibrary.createStream(hlsUrl);
-
-// HTTP-FLV 流
-String flvUrl = "http://your-server/stream.flv";
-int flvStreamId = FFmpegRTSPLibrary.createStream(flvUrl);
+int streamId = FFmpegRTSPLibrary.createStreamWithDecodeMode(url, true);
 ```
 
-#### 多流播放（✅ 推荐：异步方式）
+录制：
 ```java
-// 创建多个流（支持混合协议和混合解码模式）
-List<Integer> streamIds = new ArrayList<>();
-for (int i = 0; i < streamCount; i++) {
-    String url = streamUrls.get(i);  // 支持多种协议：RTSP, RTMP, HTTP, HLS 等
-    // 根据需求选择解码模式
-    int streamId;
-    if (i % 2 == 0) {
-        // 偶数流使用硬件解码
-        streamId = FFmpegRTSPLibrary.createStreamWithDecodeMode(url, false);
-    } else {
-        // 奇数流使用软件解码
-        streamId = FFmpegRTSPLibrary.createStreamWithDecodeMode(url, true);
-    }
-    streamIds.add(streamId);
-    
-    // 为每个流设置Surface
-    SurfaceView surfaceView = getSurfaceViewForStream(i);
-    FFmpegRTSPLibrary.setSurface(streamId, surfaceView.getHolder().getSurface());
-}
-
-// 同时播放所有流（✅ 推荐：异步方式）
-FFmpegRTSPLibrary.PlaybackCallback playbackCallback = new FFmpegRTSPLibrary.PlaybackCallback() {
-    @Override
-    public void onPlaybackStarted(int streamId) {
-        runOnUiThread(() -> {
-            Log.d(TAG, "流播放开始: streamId=" + streamId);
-        });
-    }
-    
-    @Override
-    public void onPlaybackStopped(int streamId) {
-        runOnUiThread(() -> {
-            Log.d(TAG, "流播放停止: streamId=" + streamId);
-        });
-    }
-    
-    @Override
-    public void onPlaybackError(int streamId, int errorCode, String errorMessage) {
-        runOnUiThread(() -> {
-            Log.e(TAG, "流播放错误: streamId=" + streamId + ", error=" + errorMessage);
-        });
-    }
-};
-
-for (int streamId : streamIds) {
-    FFmpegRTSPLibrary.startPlayAsync(streamId, playbackCallback);
-}
-
-// 停止所有流（✅ 推荐：异步方式）
-for (int streamId : streamIds) {
-    FFmpegRTSPLibrary.stopPlayAsync(streamId, callback);
-}
-
-// 销毁所有流
-FFmpegRTSPLibrary.destroyAllStreams();
+FFmpegRTSPLibrary.startRecordingAsync(streamId, "/sdcard/record.mp4", callback);
 ```
 
-#### 录制功能（✅ 推荐：异步方式）
+### 4. YUV 数据获取
+
+软件解码时可获取 YUV 原始帧，用于 AI 分析、滤镜处理、自定义渲染等场景。
+
+三种模式：
+- `OBSERVE_ONLY`：只读分析，不影响播放（如人脸检测）
+- `PROCESS_AND_RENDER`：处理后渲染（如美颜滤镜）
+- `CUSTOM_RENDER_ONLY`：完全接管渲染（自己 OpenGL 渲染）
+
 ```java
-// 开始录制（✅ 推荐：异步方式，不阻塞主线程）
-String outputPath = "/sdcard/record_" + timestamp + ".mp4";
-FFmpegRTSPLibrary.startRecordingAsync(streamId, outputPath, new FFmpegRTSPLibrary.RecordingCallback() {
+// 注册处理器
+FFmpegRTSPLibrary.registerYUVProcessor(streamId, new IYUVFrameProcessor() {
     @Override
-    public void onRecordingStarted(int streamId, String outputPath) {
-        // 录制开始回调
-        runOnUiThread(() -> {
-            // 更新录制状态UI
-            Log.d(TAG, "录制开始: streamId=" + streamId + ", path=" + outputPath);
-        });
+    public YUVProcessMode getProcessMode() {
+        return YUVProcessMode.OBSERVE_ONLY;
     }
     
     @Override
-    public void onRecordingStopped(int streamId) {
-        // 录制停止回调
-        runOnUiThread(() -> {
-            Log.d(TAG, "录制停止: streamId=" + streamId);
-        });
-    }
-    
-    @Override
-    public void onRecordingError(int streamId, int errorCode, String errorMessage) {
-        // 录制错误回调
-        runOnUiThread(() -> {
-            Log.e(TAG, "录制错误: streamId=" + streamId + ", error=" + errorMessage);
-        });
-    }
-    
-    @Override
-    public void onRecordingProgress(int streamId, long duration, long fileSize) {
-        // 录制进度回调（可选）
-        runOnUiThread(() -> {
-            Log.d(TAG, "录制进度: streamId=" + streamId + ", duration=" + duration + "ms, size=" + fileSize);
-        });
+    public YUVProcessResult onProcessFrame(YUVFrameInfo frame) {
+        // frame.yBuffer / uBuffer / vBuffer 为零拷贝 DirectByteBuffer
+        // 在此处理 YUV 数据，如 AI 推理
+        return YUVProcessResult.passthrough();
     }
 });
 
-// 停止录制（✅ 推荐：异步方式）
-FFmpegRTSPLibrary.stopRecordingAsync(streamId, recordingCallback);
+// 注销
+FFmpegRTSPLibrary.unregisterYUVProcessor(streamId, processor);
 ```
 
-#### 生命周期管理
+> 注意：回调在解码线程执行，耗时操作请异步处理；Buffer 仅回调期间有效。
+
+### 5. 生命周期
+
 ```java
-@Override
-protected void onResume() {
+@Override protected void onResume() {
     super.onResume();
     FFmpegRTSPLibrary.onAppForeground();
 }
 
-@Override
-protected void onPause() {
+@Override protected void onPause() {
     super.onPause();
     FFmpegRTSPLibrary.onAppBackground();
 }
 
-@Override
-protected void onDestroy() {
+@Override protected void onDestroy() {
     super.onDestroy();
-    // 清理所有资源
     FFmpegRTSPLibrary.destroyAllAsync();
 }
 ```
 
-## API 参考（精简版）
+## 延迟对比
 
-### 核心方法
+| 播放器 | 延迟 |
+|-------|-----|
+| **本项目（硬件解码）** | 80-120ms |
+| **本项目（软件解码）** | 120-200ms |
+| 原生 MediaPlayer | 300-800ms |
 
-| 方法名 | 参数 | 返回值 | 说明 |
-|--------|------|--------|------|
-| `createStream` | url | int | 创建流（默认硬件解码），返回流ID |
-| `createStreamWithDecodeMode` | url, useSoftwareDecode | int | 创建流（指定解码模式），返回流ID |
-| `setSurface` | streamId, surface | int | 设置Surface到流 |
-| `startStream` | streamId | int | 同步开始播放 |
-| `stopStream` | streamId | int | 同步停止播放 |
-| `destroyStream` | streamId | int | 销毁指定流 |
-| `destroyAllStreams` | - | int | 销毁所有流 |
+## 环境要求
 
-### 便捷方法
+- Android 7.0+ (API 24)
+- FFmpeg 6.1.1
 
-| 方法名 | 参数 | 返回值 | 说明 |
-|--------|------|--------|------|
-| `createStreamWithSurface` | url, surface | int | 一步创建流并绑定 Surface |
-| `createAndStartStream` | url, surface | int | 一步创建、绑定 Surface 并开始播放 |
+## 联系方式
 
-### 异步方法
+- 作者：jxj
+- QQ 群：647718711
 
-| 方法名 | 参数 | 说明 |
-|--------|------|------|
-| `startPlayAsync` | streamId, callback | 异步开始播放 |
-| `stopPlayAsync` | streamId, callback | 异步停止播放 |
-| `startRecordingAsync` | streamId, outputPath, callback | 异步开始录制 |
-| `stopRecordingAsync` | streamId, callback | 异步停止录制 |
-
-### 生命周期管理
-
-| 方法名 | 说明 |
-|--------|------|
-| `onAppBackground` | 应用进入后台时调用 |
-| `onAppForeground` | 应用返回前台时调用 |
-| `onSurfaceCreated` | Surface创建时调用 |
-| `onSurfaceDestroyed` | Surface销毁时调用 |
-
-### 统计和状态
-
-| 方法名 | 参数 | 返回值 | 说明 |
-|--------|------|--------|------|
-| `getStreamStats` | streamId | String | 获取流统计信息(JSON) |
-| `getActiveStreamCount` | - | int | 获取活跃流数量 |
-
-## 性能表现
-
-### ⚡ 延迟对比
-| 播放器类型 | 延迟范围 | 备注 |
-|-----------|---------|------|
-| **FFmpegStreamPlayer (硬件)** | **80-120ms** | 硬件解码 + 零拷贝 |
-| **FFmpegStreamPlayer (软件)** | **120-200ms** | 软件解码 + 软件渲染 |
-| 传统播放器 | 200-500ms | 软件解码 + 多级缓冲 |
-| WebRTC | 150-300ms | 网络优化但解码较慢 |
-| 原生MediaPlayer | 300-800ms | 系统级缓冲较大 |
-
-### 🚀 性能优势
-- **延迟控制**: 硬件解码 100ms 级，软件解码 200ms 级超低延迟
-- **CPU 占用**: 硬件解码下 CPU 占用 < 10%，软件解码下 < 30%
-- **内存效率**: 零拷贝技术，内存占用减少 30%
-- **多流性能**: 16 路并发，每路独立优化
-- **启动速度**: 流创建到首帧显示 < 200ms
-- **16kb 适配**: 支持 16kb 页面大小设备，兼容性更强
-
-## 支持格式
-
-### 流媒体协议
-- **RTSP** (Real Time Streaming Protocol) - 实时流媒体协议
-- **RTMP** (Real-Time Messaging Protocol) - 实时消息协议，支持 rtmp://, rtmps://, rtmpt:// 等
-- **HTTP/HTTPS** - HTTP 协议流媒体，支持 .mp4, .m4s, .mkv 等格式
-- **HLS** (HTTP Live Streaming) - HTTP 实时流，支持 .m3u8 播放列表
-- **HTTP-FLV** - HTTP FLV 流媒体格式
-- **RTP** (Real-time Transport Protocol) - 实时传输协议
-- **UDP** - UDP 协议流
-- **TCP** - TCP 协议流
-- **FILE** - 本地文件播放
-
-### 视频编码
-- H.264 (AVC)
-- H.265 (HEVC)
-- VP8/VP9
-- MJPEG
-
-### 音频编码
-- AAC
-- MP3
-- PCM
-
-### 容器格式
-- MP4 (.mp4)
-- M4S (.m4s)
-- FLV (.flv)
-- MKV (.mkv)
-- M3U8 (.m3u8) - HLS 播放列表
-
-## 版本信息
-
-- **当前版本**: 1.1
-- **FFmpeg 版本**: 6.1.1
-- **编译日期**: 2025
-- **最低 Android 版本**: 7.0 (API 24)
-- **新增功能**:
-    - ✅ 多协议支持（RTSP, RTMP, HTTP, HLS, HTTP-FLV, RTP 等）
-    - ✅ 软件解码/渲染支持
-    - ✅ 双解码模式选择
-    - ✅ 16kb 适配
-    - ✅ 智能时间同步控制（实时流低延迟，文件播放严格同步）
-    - ✅ 优化的丢帧策略（60fps 视频流畅播放）
-
-## 下一步计划
-
-### 🔮 即将支持
-- **YUV 数据暴露**: 将软件解码后的 YUV 数据暴露到 Java 层，支持自定义渲染和处理
-- **HTTPS 增强**: 完善 HTTPS 流媒体支持，包括证书验证和 TLS 配置
-- **WebSocket 流**: 支持 WebSocket 协议的视频流
-
-### 💡 建议
-- **使用异步操作**: 强烈建议使用 `*Async` 方法，避免阻塞主线程
-- **错误处理**: 实现完整的错误回调处理，提升用户体验
-- **资源管理**: 及时销毁不使用的流，避免内存泄漏
-
-## 注意事项
-
-1. 确保设备有足够的存储空间用于录制
-2. 网络环境对播放质量有重要影响
-3. 建议在真机上测试以获得最佳性能
-4. 录制功能需要存储权限
-
-
-### 联系方式
-- **作者**: jxj
-- **q群**: [647718711]
-- **项目需求**: 本项目支持多种流媒体协议（RTSP, RTMP, HTTP, HLS, HTTP-FLV, RTP 等），示例地址网络较差时可能体现不出超快连接和超低延迟，请自行更换测试地址。如有定制化需求或者报错，请联系作者。
-
-### 使用建议
-- ⚠️ **强烈建议使用异步方法**: 所有 `*Async` 方法都是非阻塞的，不会阻塞主线程，建议优先使用
-- ⚠️ **同步方法谨慎使用**: 同步方法（如 `startStream`, `stopStream`）会阻塞调用线程，仅在必要时使用
-- ✅ **错误处理**: 实现完整的回调处理，特别是错误回调，以便及时发现问题
-- ✅ **资源管理**: 及时调用 `destroyStream` 释放资源，避免内存泄漏
+示例地址网络较差时可能体现不出超低延迟，建议自行搭建测试环境。定制需求或问题反馈请联系作者。
 
 ## 许可证
 
-本项目基于 GPL v2 许可证开源。商业使用请联系作者获取相应授权。
----
-
-**注意**: 本项目仅供学习和研究使用，商业用途请联系作者获取授权。
+GPL v2，商业使用请联系作者获取授权。
