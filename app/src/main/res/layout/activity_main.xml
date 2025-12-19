@@ -36,6 +36,15 @@
         android:layout_height="60dp"
         android:text="YUV 数据测试"
         android:textSize="18sp"
-        android:backgroundTint="#9C27B0" />
+        android:backgroundTint="#9C27B0"
+        android:layout_marginBottom="16dp" />
+
+    <Button
+        android:id="@+id/btn_transform_test"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:text="画面变换测试"
+        android:textSize="18sp"
+        android:backgroundTint="#FF9800" />
 
 </LinearLayout>

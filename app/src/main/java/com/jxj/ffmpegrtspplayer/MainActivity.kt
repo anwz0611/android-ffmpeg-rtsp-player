@@ -10,6 +10,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnSinglePlayer: Button
     private lateinit var btnMultiPlayer: Button
     private lateinit var btnYuvTest: Button
+    private lateinit var btnTransformTest: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -23,6 +24,7 @@ class MainActivity : AppCompatActivity() {
         btnSinglePlayer = findViewById(R.id.btn_single_player)
         btnMultiPlayer = findViewById(R.id.btn_multi_player)
         btnYuvTest = findViewById(R.id.btn_yuv_test)
+        btnTransformTest = findViewById(R.id.btn_transform_test)
     }
 
     private fun setupClickListeners() {
@@ -38,6 +40,11 @@ class MainActivity : AppCompatActivity() {
 
         btnYuvTest.setOnClickListener {
             val intent = Intent(this, YUVTestActivity::class.java)
+            startActivity(intent)
+        }
+
+        btnTransformTest.setOnClickListener {
+            val intent = Intent(this, TransformTestActivity::class.java)
             startActivity(intent)
         }
     }
