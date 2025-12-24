@@ -100,17 +100,38 @@ FFmpegRTSPLibrary.unregisterYUVProcessor(streamId, processor);
 
 > 注意：回调在解码线程执行，耗时操作请异步处理；Buffer 仅回调期间有效。
 
-### 5. 生命周期
+### 5. 生命周期 必须写 关系到应用前后台切换和销毁
 
 ```java
-@Override protected void onResume() {
-    super.onResume();
-    FFmpegRTSPLibrary.onAppForeground();
+@Override
+public void surfaceCreated(SurfaceHolder holder) {
+    Log.i(TAG, "🎬 Surface创建");
+
+    if (currentStreamId >= 0) {
+        // 设置Surface到当前流
+        int result = FFmpegRTSPLibrary.setSurface(currentStreamId, holder.getSurface());
+        if (result == 0) {
+            Log.i(TAG, "✅ Surface设置成功");
+            showToast("Surface设置成功");
+        } else {
+            Log.e(TAG, "❌ Surface设置失败");
+            showToast("Surface设置失败");
+        }
+    }
 }
 
-@Override protected void onPause() {
-    super.onPause();
-    FFmpegRTSPLibrary.onAppBackground();
+@Override
+public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+    Log.i(TAG, "🎬 Surface变化: " + width + "x" + height);
+}
+
+@Override
+public void surfaceDestroyed(SurfaceHolder holder) {
+    Log.i(TAG, "🗑️ Surface销毁");
+
+    if (currentStreamId >= 0) {
+        FFmpegRTSPLibrary.onSurfaceDestroyed(currentStreamId);
+    }
 }
 
 @Override protected void onDestroy() {
