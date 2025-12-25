@@ -63,6 +63,10 @@ FFmpegRTSPLibrary.destroyStream(streamId);
 ```java
 int streamId = FFmpegRTSPLibrary.createStreamWithDecodeMode(url, true);
 ```
+音频开关(url,是否启用软件解码默认硬件,是否启用音频默认开启)：
+```java
+int streamId = FFmpegRTSPLibrary.createStreamWithOptions(url, false, false); // 禁用音频
+```
 
 录制：
 ```java
