@@ -14,12 +14,13 @@
 ## 特性
 
 - 超低延迟：硬件解码 100ms 级，软件解码 200ms 级
-- 多流并发：最高支持 16 路同时播放
+- 多流并发：最高支持 16 路同时播放（根据设备性能可能会更多）
 - 双解码模式：硬件解码/软件解码可选
 - 零拷贝渲染：直接内存映射
 - 实时录制：边播边录，质量无损
 - YUV 数据暴露：支持自定义帧处理
 - 16kb 页面适配
+- 后期会有更多功能（待开发）
 
 ## 支持协议
 
@@ -46,7 +47,7 @@ dependencies {
 
 ```java
 // 创建流
-int streamId = FFmpegRTSPLibrary.createStream("rtsp://your-server/stream");
+int streamId = FFmpegRTSPLibrary.createStream("rtsp://your-server/stream");//默认硬件解码
 
 // 绑定 Surface
 FFmpegRTSPLibrary.setSurface(streamId, surfaceView.getHolder().getSurface());
@@ -63,7 +64,7 @@ FFmpegRTSPLibrary.destroyStream(streamId);
 ```java
 int streamId = FFmpegRTSPLibrary.createStreamWithDecodeMode(url, true);
 ```
-音频开关(url,是否启用软件解码默认硬件,是否启用音频默认开启)：
+音频开关(url,是否启用软件解码,是否启用音频默认开启)：
 ```java
 int streamId = FFmpegRTSPLibrary.createStreamWithOptions(url, false, false); // 禁用音频
 ```
@@ -162,7 +163,7 @@ public void surfaceDestroyed(SurfaceHolder holder) {
 - 作者：jxj
 - QQ 群：647718711
 
-示例地址网络较差时可能体现不出超低延迟，建议自行搭建测试环境。定制需求或问题反馈请联系作者。
+示例地址网络较差时可能体现不出超低延迟，建议自行搭建测试环境。定制需求或问题反馈请联系作者。本项目长期维护放心使用。
 
 ## 许可证
 
