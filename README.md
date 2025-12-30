@@ -164,6 +164,7 @@ public void surfaceDestroyed(SurfaceHolder holder) {
 - QQ 群：647718711
 
 示例地址网络较差时可能体现不出超低延迟，建议自行搭建测试环境。定制需求或问题反馈请联系作者。本项目长期维护放心使用。
+(aar包含"arm64-v8a", "armeabi-v7a", "x86_64" 如只需要特定架构请联系作者)
 
 ## 许可证
 
