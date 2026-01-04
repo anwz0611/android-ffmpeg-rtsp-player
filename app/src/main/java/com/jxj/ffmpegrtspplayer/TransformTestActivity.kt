@@ -493,6 +493,6 @@ class TransformTestActivity : AppCompatActivity(), SurfaceHolder.Callback {
                 Log.e(TAG, "❌ 销毁流异常", e)
             }
         }
-        FFmpegRTSPLibrary.destroyManagerAsync()
+
     }
 }
