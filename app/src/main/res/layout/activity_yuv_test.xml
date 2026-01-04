@@ -204,6 +204,43 @@
                     android:layout_marginStart="4dp" />
             </LinearLayout>
 
+            <!-- 分隔标题: 模式4 异步AI分析 -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="🤖 模式4: 异步AI分析 (IAsyncYUVProcessor)"
+                android:textColor="#F48FB1"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/registerAsyncButton"
+                    android:layout_width="0dp"
+                    android:layout_height="34dp"
+                    android:layout_weight="1"
+                    android:text="注册异步"
+                    android:textSize="11sp"
+                    android:backgroundTint="#E91E63"
+                    android:layout_marginEnd="4dp" />
+
+                <Button
+                    android:id="@+id/unregisterAsyncButton"
+                    android:layout_width="0dp"
+                    android:layout_height="34dp"
+                    android:layout_weight="1"
+                    android:text="注销异步"
+                    android:textSize="11sp"
+                    android:backgroundTint="#607D8B"
+                    android:layout_marginStart="4dp" />
+            </LinearLayout>
+
             <!-- 渲染控制 -->
             <TextView
                 android:layout_width="match_parent"

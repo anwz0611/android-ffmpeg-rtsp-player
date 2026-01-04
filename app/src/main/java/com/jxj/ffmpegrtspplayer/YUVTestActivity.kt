@@ -14,12 +14,19 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.jxj.ffmpegrtsp.lib.FFmpegRTSPLibrary
 import com.jxj.ffmpegrtsp.lib.yuv.IYUVFrameProcessor
+import com.jxj.ffmpegrtsp.lib.yuv.IAsyncYUVProcessor
 import com.jxj.ffmpegrtsp.lib.yuv.YUVFrameInfo
 import com.jxj.ffmpegrtsp.lib.yuv.YUVProcessMode
 import com.jxj.ffmpegrtsp.lib.yuv.YUVProcessResult
+import com.jxj.ffmpegrtsp.lib.yuv.YUVPlugin
+import com.jxj.ffmpegrtsp.lib.yuv.YUVPluginManager
+import com.jxj.ffmpegrtsp.lib.yuv.YUVPluginConfig
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicLong
 
 /**
@@ -51,6 +58,8 @@ class YUVTestActivity : AppCompatActivity(), SurfaceHolder.Callback {
     private lateinit var unregisterFilterButton: Button
     private lateinit var registerCustomButton: Button
     private lateinit var unregisterCustomButton: Button
+    private lateinit var registerAsyncButton: Button
+    private lateinit var unregisterAsyncButton: Button
     private lateinit var enableRenderButton: Button
     private lateinit var disableRenderButton: Button
     private lateinit var clearProcessorsButton: Button
@@ -68,21 +77,28 @@ class YUVTestActivity : AppCompatActivity(), SurfaceHolder.Callback {
     private var isStreamStarted = false
     private var isSurfaceReady = false
 
-    // 三种处理器
-    private lateinit var observerProcessor: IYUVFrameProcessor
-    private lateinit var filterProcessor: IYUVFrameProcessor
-    private lateinit var customProcessor: IYUVFrameProcessor
+    // 四种处理器
+    private lateinit var observerProcessor: IYUVFrameProcessor   // 只读观察处理器（同步）
+    private lateinit var filterProcessor: IYUVFrameProcessor     // 滤镜处理处理器（同步）
+    private lateinit var customProcessor: IYUVFrameProcessor     // 自定义渲染处理器（同步）
+    private lateinit var asyncProcessor: IAsyncYUVProcessor       // 异步AI分析处理器（异步）
 
     private var isObserverRegistered = false
     private var isFilterRegistered = false
     private var isCustomRegistered = false
+    private var isAsyncRegistered = false
 
     // 统计
     private val observerFrameCount = AtomicLong(0)
     private val filterFrameCount = AtomicLong(0)
     private val customFrameCount = AtomicLong(0)
+    private val asyncFrameCount = AtomicLong(0)
+    private val asyncCompletedCount = AtomicLong(0)
     @Volatile
     private var lastFrameInfo: YUVFrameInfo? = null
+
+    // 异步处理线程池
+    private val asyncExecutor: ExecutorService = Executors.newFixedThreadPool(2)
 
     // UI 更新
     private val mainHandler = Handler(Looper.getMainLooper())
@@ -125,6 +141,10 @@ class YUVTestActivity : AppCompatActivity(), SurfaceHolder.Callback {
         registerCustomButton = findViewById(R.id.registerCustomButton)
         unregisterCustomButton = findViewById(R.id.unregisterCustomButton)
 
+        // 模式4: 异步AI分析
+        registerAsyncButton = findViewById(R.id.registerAsyncButton)
+        unregisterAsyncButton = findViewById(R.id.unregisterAsyncButton)
+
         // 渲染控制
         enableRenderButton = findViewById(R.id.enableRenderButton)
         disableRenderButton = findViewById(R.id.disableRenderButton)
@@ -164,6 +184,10 @@ class YUVTestActivity : AppCompatActivity(), SurfaceHolder.Callback {
         // 模式3: 自定义渲染
         registerCustomButton.setOnClickListener { registerCustom() }
         unregisterCustomButton.setOnClickListener { unregisterCustom() }
+
+        // 模式4: 异步AI分析
+        registerAsyncButton.setOnClickListener { registerAsync() }
+        unregisterAsyncButton.setOnClickListener { unregisterAsync() }
 
         // 渲染控制
         enableRenderButton.setOnClickListener { setBuiltinRender(true) }
@@ -261,6 +285,70 @@ class YUVTestActivity : AppCompatActivity(), SurfaceHolder.Callback {
                 // 跳过内置渲染，由自己处理
                 return YUVProcessResult.skipRender()
             }
+        }
+
+        // 模式4: 异步AI分析处理器 (IAsyncYUVProcessor)
+        // 适用场景: 耗时AI分析（人脸检测、物体识别）、云端分析、复杂图像处理
+        asyncProcessor = object : IAsyncYUVProcessor {
+            override fun getPriority(): Int = 20 // 较高优先级
+
+            override fun getProcessMode(): YUVProcessMode = YUVProcessMode.OBSERVE_ONLY // 只读观察，不影响渲染
+
+            override fun onProcessFrame(frame: YUVFrameInfo): YUVProcessResult {
+                // 同步快速返回（不阻塞解码线程）
+                asyncFrameCount.incrementAndGet()
+                return YUVProcessResult.passthrough()
+            }
+
+            override fun processFrameAsync(frame: YUVFrameInfo): CompletableFuture<YUVProcessResult> {
+                // 异步处理（在独立线程执行，不阻塞解码线程）
+                return CompletableFuture.supplyAsync({
+                    try {
+                        // 模拟耗时AI分析（如人脸检测、物体识别）
+                        // 实际应用中：
+                        // - 调用AI模型进行推理
+                        // - 云端API分析
+                        // - 复杂图像处理算法
+
+                        // 模拟处理时间（10-50ms）
+                        Thread.sleep(20)
+
+                        // 模拟AI分析结果
+                        val completed = asyncCompletedCount.incrementAndGet()
+
+                        // 更新UI（切换到主线程）
+                        mainHandler.post {
+                            if (completed % 30 == 0L) {
+                                appendLog("🤖 [异步AI] 已完成 $completed 帧分析, 当前帧=${frame.frameIndex}")
+                            }
+                        }
+
+                        // 返回透传（不影响渲染）
+                        YUVProcessResult.passthroughWithMetadata("AI分析完成: frameIndex=${frame.frameIndex}")
+
+                    } catch (e: InterruptedException) {
+                        Thread.currentThread().interrupt()
+                        YUVProcessResult.passthrough()
+                    } catch (e: Exception) {
+                        Log.e(TAG, "异步处理异常", e)
+                        YUVProcessResult.passthrough()
+                    }
+                }, asyncExecutor)
+            }
+
+            override fun getAsyncTimeout(): Long = 2000 // 2秒超时
+
+            override fun onAsyncProcessComplete(streamId: Int, frameIndex: Long, result: YUVProcessResult) {
+                // 处理完成回调（可选）
+                Log.d(TAG, "异步处理完成: streamId=$streamId, frameIndex=$frameIndex")
+            }
+
+            override fun onAsyncProcessError(streamId: Int, frameIndex: Long, error: Throwable) {
+                // 处理错误回调（可选）
+                Log.e(TAG, "异步处理错误: streamId=$streamId, frameIndex=$frameIndex", error)
+            }
+
+            override fun supportsAsync(): Boolean = true // 明确标记支持异步
         }
     }
 
@@ -527,6 +615,49 @@ class YUVTestActivity : AppCompatActivity(), SurfaceHolder.Callback {
     }
 
     // ============================================================================
+    // 处理器注册/注销 - 模式4: 异步AI分析
+    // ============================================================================
+
+    private fun registerAsync() {
+        if (!checkStreamReady()) return
+        if (isAsyncRegistered) {
+            showToast("异步处理器已注册")
+            return
+        }
+
+        appendLog("🤖 注册异步AI分析处理器...")
+
+        if (FFmpegRTSPLibrary.registerYUVProcessor(currentStreamId, asyncProcessor)) {
+            isAsyncRegistered = true
+            asyncFrameCount.set(0)
+            asyncCompletedCount.set(0)
+            showToast("异步处理器注册成功")
+            appendLog("✅ 异步AI处理器注册成功 (IAsyncYUVProcessor)")
+            appendLog("   用途: 耗时AI分析、云端处理 - 不阻塞解码线程")
+            appendLog("   ⚡ 优势: 异步执行，不影响播放流畅度")
+        } else {
+            appendLog("❌ 异步处理器注册失败")
+        }
+        updateUI()
+    }
+
+    private fun unregisterAsync() {
+        if (!checkStreamReady()) return
+        if (!isAsyncRegistered) {
+            showToast("异步处理器未注册")
+            return
+        }
+
+        if (FFmpegRTSPLibrary.unregisterYUVProcessor(currentStreamId, asyncProcessor)) {
+            isAsyncRegistered = false
+            appendLog("✅ 异步处理器已注销")
+        } else {
+            appendLog("❌ 注销失败")
+        }
+        updateUI()
+    }
+
+    // ============================================================================
     // 渲染控制
     // ============================================================================
 
@@ -546,6 +677,7 @@ class YUVTestActivity : AppCompatActivity(), SurfaceHolder.Callback {
         isObserverRegistered = false
         isFilterRegistered = false
         isCustomRegistered = false
+        isAsyncRegistered = false
         resetStats()
         appendLog("🗑️ 已清空所有处理器")
         updateUI()
@@ -592,6 +724,7 @@ class YUVTestActivity : AppCompatActivity(), SurfaceHolder.Callback {
 
     override fun onDestroy() {
         super.onDestroy()
+
         if (currentStreamId >= 0) {
             try {
                 FFmpegRTSPLibrary.clearYUVProcessors(currentStreamId)
@@ -600,6 +733,17 @@ class YUVTestActivity : AppCompatActivity(), SurfaceHolder.Callback {
             } catch (e: Exception) {
                 Log.e(TAG, "销毁流异常", e)
             }
+        }
+
+        // 关闭异步处理线程池
+        asyncExecutor.shutdown()
+        try {
+            if (!asyncExecutor.awaitTermination(2, java.util.concurrent.TimeUnit.SECONDS)) {
+                asyncExecutor.shutdownNow()
+            }
+        } catch (e: InterruptedException) {
+            asyncExecutor.shutdownNow()
+            Thread.currentThread().interrupt()
         }
     }
 
@@ -623,6 +767,8 @@ class YUVTestActivity : AppCompatActivity(), SurfaceHolder.Callback {
             unregisterFilterButton.isEnabled = canRegister && isFilterRegistered
             registerCustomButton.isEnabled = canRegister && !isCustomRegistered
             unregisterCustomButton.isEnabled = canRegister && isCustomRegistered
+            registerAsyncButton.isEnabled = canRegister && !isAsyncRegistered
+            unregisterAsyncButton.isEnabled = canRegister && isAsyncRegistered
 
             // 渲染控制
             enableRenderButton.isEnabled = isStreamCreated
@@ -650,6 +796,7 @@ class YUVTestActivity : AppCompatActivity(), SurfaceHolder.Callback {
             if (isObserverRegistered) { procStatus.append("👁️观察 "); count++ }
             if (isFilterRegistered) { procStatus.append("🎨滤镜 "); count++ }
             if (isCustomRegistered) { procStatus.append("🖥️自定义 "); count++ }
+            if (isAsyncRegistered) { procStatus.append("🤖异步 "); count++ }
             if (count == 0) {
                 procStatus.append("无")
             } else {
@@ -668,12 +815,12 @@ class YUVTestActivity : AppCompatActivity(), SurfaceHolder.Callback {
     }
 
     private fun updateFrameStats(frame: YUVFrameInfo?, source: String) {
-        val total = observerFrameCount.get() + filterFrameCount.get() + customFrameCount.get()
+        val total = observerFrameCount.get() + filterFrameCount.get() + customFrameCount.get() + asyncFrameCount.get()
 
         frameCountTextView.text = String.format(
             Locale.getDefault(),
-            "帧数: %d (👁️%d 🎨%d 🖥️%d) 来源:%s",
-            total, observerFrameCount.get(), filterFrameCount.get(), customFrameCount.get(), source
+            "帧数: %d (👁️%d 🎨%d 🖥️%d 🤖%d/%d) 来源:%s",
+            total, observerFrameCount.get(), filterFrameCount.get(), customFrameCount.get(), asyncFrameCount.get(), asyncCompletedCount.get(), source
         )
 
         frame?.let {
@@ -697,6 +844,8 @@ class YUVTestActivity : AppCompatActivity(), SurfaceHolder.Callback {
         observerFrameCount.set(0)
         filterFrameCount.set(0)
         customFrameCount.set(0)
+        asyncFrameCount.set(0)
+        asyncCompletedCount.set(0)
         lastFrameInfo = null
     }
 
