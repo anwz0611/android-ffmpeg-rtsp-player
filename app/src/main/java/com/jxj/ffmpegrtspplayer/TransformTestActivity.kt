@@ -493,8 +493,8 @@ class TransformTestActivity : AppCompatActivity(), SurfaceHolder.Callback {
         super.onDestroy()
         if (currentStreamId >= 0) {
             try {
-                FFmpegRTSPLibrary.stopStream(currentStreamId)
-                FFmpegRTSPLibrary.destroyStream(currentStreamId)
+
+                FFmpegRTSPLibrary.destroyStreamAsync(currentStreamId)
             } catch (e: Exception) {
                 Log.e(TAG, "❌ 销毁流异常", e)
             }

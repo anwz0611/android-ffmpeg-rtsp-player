@@ -724,8 +724,7 @@ class YUVTestActivity : AppCompatActivity(), SurfaceHolder.Callback {
         if (currentStreamId >= 0) {
             try {
                 FFmpegRTSPLibrary.clearYUVProcessors(currentStreamId)
-                FFmpegRTSPLibrary.stopStream(currentStreamId)
-                FFmpegRTSPLibrary.destroyStream(currentStreamId)
+                FFmpegRTSPLibrary.destroyStreamAsync(currentStreamId)
             } catch (e: Exception) {
                 Log.e(TAG, "销毁流异常", e)
             }
