@@ -22,7 +22,9 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.jxj.ffmpegrtsp.lib.FFmpegCallbacks
 import com.jxj.ffmpegrtsp.lib.FFmpegRTSPLibrary
+import com.jxj.ffmpegrtsp.lib.VideoInfo
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -163,20 +165,12 @@ class MultiPlayerActivity : AppCompatActivity() {
 
     private fun playStream(streamItem: StreamItem) {
         if (!streamItem.isPlaying) {
-            FFmpegRTSPLibrary.startPlayAsync(streamItem.streamId, object : FFmpegRTSPLibrary.PlaybackCallback {
-                override fun onPlaybackStarted(streamId: Int) {
+            FFmpegRTSPLibrary.startPlayAsync(streamItem.streamId, object : FFmpegCallbacks.PlaybackStartCallback {
+                override fun onPlaybackStarted(streamId: Int, videoInfo: VideoInfo?) {
                     runOnUiThread {
                         streamItem.isPlaying = true
                         streamItem.updateStatus("正在播放")
                         streamItem.updatePlayButton("暂停")
-                    }
-                }
-
-                override fun onPlaybackStopped(streamId: Int) {
-                    runOnUiThread {
-                        streamItem.isPlaying = false
-                        streamItem.updateStatus("已停止")
-                        streamItem.updatePlayButton("播放")
                     }
                 }
 
@@ -187,12 +181,6 @@ class MultiPlayerActivity : AppCompatActivity() {
                         streamItem.updatePlayButton("播放")
                     }
                 }
-
-                override fun onPlaybackInfo(streamId: Int, info: String) {
-                    runOnUiThread {
-                        streamItem.updateStats(info)
-                    }
-                }
             })
         } else {
             stopStream(streamItem)
@@ -201,9 +189,7 @@ class MultiPlayerActivity : AppCompatActivity() {
 
     private fun stopStream(streamItem: StreamItem) {
         if (streamItem.isPlaying) {
-            FFmpegRTSPLibrary.stopPlayAsync(streamItem.streamId, object : FFmpegRTSPLibrary.PlaybackCallback {
-                override fun onPlaybackStarted(streamId: Int) {}
-
+            FFmpegRTSPLibrary.stopPlayAsync(streamItem.streamId, object : FFmpegCallbacks.PlaybackStopCallback {
                 override fun onPlaybackStopped(streamId: Int) {
                     runOnUiThread {
                         streamItem.isPlaying = false
@@ -219,8 +205,6 @@ class MultiPlayerActivity : AppCompatActivity() {
                         streamItem.updatePlayButton("播放")
                     }
                 }
-
-                override fun onPlaybackInfo(streamId: Int, info: String) {}
             })
         }
     }
@@ -237,20 +221,12 @@ class MultiPlayerActivity : AppCompatActivity() {
         }
         val recordPath = File(recordDir, fileName).absolutePath
 
-        FFmpegRTSPLibrary.startRecordingAsync(streamItem.streamId, recordPath, object : FFmpegRTSPLibrary.RecordingCallback {
+        FFmpegRTSPLibrary.startRecordingAsync(streamItem.streamId, recordPath, object : FFmpegCallbacks.RecordingStartCallback {
             override fun onRecordingStarted(streamId: Int, outputPath: String) {
                 runOnUiThread {
                     streamItem.isRecording = true
                     streamItem.updateRecordButton("停止录制")
                     streamItem.updateStats("正在录制: $fileName")
-                }
-            }
-
-            override fun onRecordingStopped(streamId: Int) {
-                runOnUiThread {
-                    streamItem.isRecording = false
-                    streamItem.updateRecordButton("录制")
-                    streamItem.updateStats("录制完成")
                 }
             }
 
@@ -261,20 +237,12 @@ class MultiPlayerActivity : AppCompatActivity() {
                     streamItem.updateStats("录制错误: $errorMessage")
                 }
             }
-
-            override fun onRecordingProgress(streamId: Int, duration: Long, fileSize: Long) {
-                runOnUiThread {
-                    streamItem.updateStats("录制中: ${duration / 1000}s, 大小: ${fileSize / 1024}KB")
-                }
-            }
         })
     }
 
     private fun stopRecording(streamItem: StreamItem) {
         if (streamItem.isRecording) {
-            FFmpegRTSPLibrary.stopRecordingAsync(streamItem.streamId, object : FFmpegRTSPLibrary.RecordingCallback {
-                override fun onRecordingStarted(streamId: Int, outputPath: String) {}
-
+            FFmpegRTSPLibrary.stopRecordingAsync(streamItem.streamId, object : FFmpegCallbacks.RecordingStopCallback {
                 override fun onRecordingStopped(streamId: Int) {
                     runOnUiThread {
                         streamItem.isRecording = false
@@ -290,8 +258,6 @@ class MultiPlayerActivity : AppCompatActivity() {
                         streamItem.updateStats("停止录制错误: $errorMessage")
                     }
                 }
-
-                override fun onRecordingProgress(streamId: Int, duration: Long, fileSize: Long) {}
             })
         }
     }

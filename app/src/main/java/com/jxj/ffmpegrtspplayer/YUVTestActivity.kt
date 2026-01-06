@@ -12,7 +12,9 @@ import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.jxj.ffmpegrtsp.lib.FFmpegCallbacks
 import com.jxj.ffmpegrtsp.lib.FFmpegRTSPLibrary
+import com.jxj.ffmpegrtsp.lib.VideoInfo
 import com.jxj.ffmpegrtsp.lib.yuv.IYUVFrameProcessor
 import com.jxj.ffmpegrtsp.lib.yuv.IAsyncYUVProcessor
 import com.jxj.ffmpegrtsp.lib.yuv.YUVFrameInfo
@@ -76,6 +78,7 @@ class YUVTestActivity : AppCompatActivity(), SurfaceHolder.Callback {
     private var isStreamCreated = false
     private var isStreamStarted = false
     private var isSurfaceReady = false
+
 
     // 四种处理器
     private lateinit var observerProcessor: IYUVFrameProcessor   // 只读观察处理器（同步）
@@ -401,20 +404,19 @@ class YUVTestActivity : AppCompatActivity(), SurfaceHolder.Callback {
 
         appendLog("🚀 启动流: ID=$currentStreamId")
 
-        FFmpegRTSPLibrary.startPlayAsync(currentStreamId, object : FFmpegRTSPLibrary.PlaybackCallback {
-            override fun onPlaybackStarted(streamId: Int) {
+        FFmpegRTSPLibrary.startPlayAsync(currentStreamId, object : FFmpegCallbacks.PlaybackStartCallback {
+            override fun onPlaybackStarted(streamId: Int, videoInfo: VideoInfo?) {
                 runOnUiThread {
                     isStreamStarted = true
                     showToast("流启动成功")
                     appendLog("✅ 流启动成功")
-                    updateUI()
-                }
-            }
 
-            override fun onPlaybackStopped(streamId: Int) {
-                runOnUiThread {
-                    isStreamStarted = false
-                    appendLog("⏹️ 流已停止")
+                    if (videoInfo != null) {
+                        appendLog("📹 视频信息就绪: $videoInfo")
+                    } else {
+                        appendLog("📹 视频信息暂未就绪")
+                    }
+
                     updateUI()
                 }
             }
@@ -424,12 +426,6 @@ class YUVTestActivity : AppCompatActivity(), SurfaceHolder.Callback {
                     showToast("启动流失败: $errorMessage")
                     appendLog("❌ 启动失败: $errorMessage")
                     updateUI()
-                }
-            }
-
-            override fun onPlaybackInfo(streamId: Int, info: String) {
-                runOnUiThread {
-                    appendLog("ℹ️ $info")
                 }
             }
         })
@@ -443,9 +439,7 @@ class YUVTestActivity : AppCompatActivity(), SurfaceHolder.Callback {
 
         appendLog("🛑 停止流")
 
-        FFmpegRTSPLibrary.stopPlayAsync(currentStreamId, object : FFmpegRTSPLibrary.PlaybackCallback {
-            override fun onPlaybackStarted(streamId: Int) {}
-
+        FFmpegRTSPLibrary.stopPlayAsync(currentStreamId, object : FFmpegCallbacks.PlaybackStopCallback {
             override fun onPlaybackStopped(streamId: Int) {
                 runOnUiThread {
                     isStreamStarted = false
@@ -457,6 +451,8 @@ class YUVTestActivity : AppCompatActivity(), SurfaceHolder.Callback {
 
             override fun onPlaybackError(streamId: Int, errorCode: Int, errorMessage: String) {
                 runOnUiThread {
+                    isStreamStarted = false
+                    showToast("流停止失败: $errorMessage")
                     appendLog("❌ 停止流失败: $errorMessage")
                     updateUI()
                 }

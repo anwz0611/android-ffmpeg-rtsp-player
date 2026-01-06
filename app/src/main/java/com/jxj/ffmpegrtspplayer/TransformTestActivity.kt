@@ -10,8 +10,10 @@ import android.widget.SeekBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.jxj.ffmpegrtsp.lib.transform.VideoTransformManager
+import com.jxj.ffmpegrtsp.lib.FFmpegCallbacks
 import com.jxj.ffmpegrtsp.lib.FFmpegRTSPLibrary
+import com.jxj.ffmpegrtsp.lib.VideoInfo
+import com.jxj.ffmpegrtsp.lib.transform.VideoTransformManager
 
 /**
  * 画面变换测试Activity
@@ -230,26 +232,30 @@ class TransformTestActivity : AppCompatActivity(), SurfaceHolder.Callback {
         
         Log.i(TAG, "🚀 异步启动流: ID=$currentStreamId")
         
-        FFmpegRTSPLibrary.startPlayAsync(currentStreamId, object : FFmpegRTSPLibrary.PlaybackCallback {
-            override fun onPlaybackStarted(streamId: Int) {
+        FFmpegRTSPLibrary.startPlayAsync(currentStreamId, object : FFmpegCallbacks.PlaybackStartCallback {
+            override fun onPlaybackStarted(streamId: Int, videoInfo: VideoInfo?) {
                 runOnUiThread {
                     isStreamStarted = true
                     showToast("流启动成功")
                     Log.i(TAG, "✅ 流启动成功")
+
+
+                    if (videoInfo != null) {
+                        Log.i(TAG, "📹 视频信息就绪: $videoInfo")
+                    } else {
+                        Log.d(TAG, "📹 视频信息暂未就绪")
+                    }
+
                     updateUI()
                 }
             }
-            
+
             override fun onPlaybackError(streamId: Int, errorCode: Int, errorMessage: String) {
                 runOnUiThread {
                     showToast("启动流失败: $errorMessage")
                     Log.e(TAG, "❌ $errorMessage")
                     updateUI()
                 }
-            }
-            
-            override fun onPlaybackStopped(streamId: Int) {
-                // 不需要处理
             }
         })
     }
