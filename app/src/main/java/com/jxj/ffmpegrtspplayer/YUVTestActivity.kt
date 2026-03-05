@@ -14,6 +14,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.jxj.ffmpegrtsp.lib.FFmpegCallbacks
 import com.jxj.ffmpegrtsp.lib.FFmpegRTSPLibrary
+import com.jxj.ffmpegrtsp.lib.StreamConfig
 import com.jxj.ffmpegrtsp.lib.VideoInfo
 import com.jxj.ffmpegrtsp.lib.yuv.IYUVFrameProcessor
 import com.jxj.ffmpegrtsp.lib.yuv.IAsyncYUVProcessor
@@ -375,7 +376,7 @@ class YUVTestActivity : AppCompatActivity(), SurfaceHolder.Callback {
         appendLog("🚀 创建流: $url")
 
         // 使用软件解码（必须使用软件解码才能获取 YUV 数据）
-        val streamId = FFmpegRTSPLibrary.createStreamWithDecodeMode(url, true)
+        val streamId = FFmpegRTSPLibrary.createStream(StreamConfig.Builder(url).useSoftwareDecode(true).build())
 
         if (streamId < 0) {
             showToast("创建流失败")

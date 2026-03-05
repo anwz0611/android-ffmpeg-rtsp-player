@@ -24,7 +24,10 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.jxj.ffmpegrtsp.lib.FFmpegCallbacks
 import com.jxj.ffmpegrtsp.lib.FFmpegRTSPLibrary
+import com.jxj.ffmpegrtsp.lib.StreamConfig
 import com.jxj.ffmpegrtsp.lib.VideoInfo
+import com.jxj.ffmpegrtsp.lib.capture.FrameCaptureRequest
+import com.jxj.ffmpegrtsp.lib.capture.FrameCaptureResult
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -131,7 +134,7 @@ class MultiPlayerActivity : AppCompatActivity() {
         }
 
         // 创建流
-        val streamId = FFmpegRTSPLibrary.createStream(url)
+        val streamId = FFmpegRTSPLibrary.createStream(StreamConfig.Builder(url).build())
         if (streamId >= 0) {
             val streamItem = StreamItem(streamId, url, nextStreamId++)
             streamItems.add(streamItem)
@@ -296,58 +299,56 @@ class MultiPlayerActivity : AppCompatActivity() {
         }
 
         val surfaceView = streamItem.surfaceView
-        if (surfaceView == null) {
+        val surfaceHolder = streamItem.surfaceView?.holder
+        if (surfaceView == null || surfaceHolder == null) {
             Toast.makeText(this, getString(R.string.take_photo_fail), Toast.LENGTH_SHORT).show()
             return
         }
 
-        // 创建Bitmap
-        val bitmap = Bitmap.createBitmap(VIDEO_WIDTH, VIDEO_HEIGHT, Bitmap.Config.ARGB_8888)
-        
-        // 使用PixelCopy进行截图
-        PixelCopy.request(
-            surfaceView, bitmap, { copyResult ->
-                if (copyResult == PixelCopy.SUCCESS) {
-                    Toast.makeText(this, getString(R.string.take_photo_success), Toast.LENGTH_SHORT).show()
-                    Thread { saveBitmap(bitmap) }.start()
-                } else {
-                    Toast.makeText(this, getString(R.string.take_photo_fail), Toast.LENGTH_SHORT).show()
-                }
-            }, Handler(Looper.getMainLooper())
-        )
-    }
-
-    private fun saveBitmap(bitmap: Bitmap) {
-        try {
-            // 创建保存目录
-            val picturesDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
-            val appDir = File(picturesDir, "FFmpegRTSPPlayer")
-            if (!appDir.exists()) {
-                appDir.mkdirs()
-            }
-
-            // 生成文件名
-            val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
-            val fileName = "RTSP_Photo_$timeStamp.jpg"
-            val file = File(appDir, fileName)
-
-            // 保存图片
-            FileOutputStream(file).use { fos ->
-                bitmap.compress(Bitmap.CompressFormat.JPEG, 90, fos)
-                fos.flush()
-            }
-
-            // 在主线程显示保存成功消息
-            runOnUiThread {
-                Toast.makeText(this, "${getString(R.string.photo_saved)}: ${file.absolutePath}", Toast.LENGTH_LONG).show()
-            }
-
-        } catch (e: IOException) {
-            Log.e(TAG, "保存图片失败", e)
-            runOnUiThread {
-                Toast.makeText(this, "保存图片失败: ${e.message}", Toast.LENGTH_SHORT).show()
-            }
+        val dir = getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+        if (dir == null) {
+            Toast.makeText(this, "无法获取图片目录", Toast.LENGTH_SHORT).show()
+            return
         }
+        if (!dir.exists() && !dir.mkdirs()) {
+            Toast.makeText(this, "创建图片目录失败", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val fileName = "native_capture_" + System.currentTimeMillis() + ".jpg"
+        val outFile = File(dir, fileName)
+
+        val request = FrameCaptureRequest.Builder()
+            .targetWidth(960)
+            .outputPath(outFile.absolutePath)
+            .imageFormat(FrameCaptureRequest.ImageFormat.JPEG)
+            .quality(90)
+            .timeoutMs(2500)
+            .returnBitmap(false)
+            .returnBytes(false)
+            .build()
+
+        Log.d(TAG, "发起 native 截图请求：" + outFile.absolutePath)
+        FFmpegRTSPLibrary.captureFrameAsync(
+            streamItem.streamId,
+            surfaceHolder.surface,
+            request,
+            object : FFmpegCallbacks.FrameCaptureCallback {
+                override fun onCaptureSuccess(streamId: Int, result: FrameCaptureResult) {
+                    val path = result.outputPath ?: outFile.absolutePath
+                    Log.d(TAG, "截图成功：" + path
+                            + " | backend=" + result.captureBackend
+                            + " | mode=" + result.captureMode
+                            + " | ptsNs=" + result.framePtsNs)
+                    Toast.makeText(this@MultiPlayerActivity, "截图成功：" + File(path).name, Toast.LENGTH_SHORT).show()
+                }
+
+                override fun onCaptureError(streamId: Int, errorCode: Int, errorMessage: String) {
+                    Log.e(TAG, "截图失败：code=$errorCode, msg=$errorMessage")
+                    Toast.makeText(this@MultiPlayerActivity, "截图失败：$errorMessage", Toast.LENGTH_SHORT).show()
+                }
+            }
+        )
     }
 
     override fun onDestroy() {

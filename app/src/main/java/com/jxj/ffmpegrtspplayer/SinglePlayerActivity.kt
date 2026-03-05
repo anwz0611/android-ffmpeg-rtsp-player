@@ -20,6 +20,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.jxj.ffmpegrtsp.lib.FFmpegCallbacks
 import com.jxj.ffmpegrtsp.lib.FFmpegRTSPLibrary
+import com.jxj.ffmpegrtsp.lib.StreamConfig
 import com.jxj.ffmpegrtsp.lib.VideoInfo
 import java.io.File
 import java.text.SimpleDateFormat
@@ -114,7 +115,10 @@ class SinglePlayerActivity : AppCompatActivity(), SurfaceHolder.Callback {
         performanceMonitorRunnable = Runnable {
             if (isPerformanceMonitoring && streamId >= 0) {
                 updatePerformanceStats()
-                performanceMonitorHandler?.postDelayed(performanceMonitorRunnable!!, UPDATE_INTERVAL_MS)
+                performanceMonitorHandler?.postDelayed(
+                    performanceMonitorRunnable!!,
+                    UPDATE_INTERVAL_MS
+                )
             }
         }
 
@@ -177,7 +181,9 @@ class SinglePlayerActivity : AppCompatActivity(), SurfaceHolder.Callback {
 
         // 🔥 使用新的软件解码架构
         val useSoftwareDecode = true // 强制使用软件解码进行测试
-        streamId = FFmpegRTSPLibrary.createStreamWithDecodeMode(url, useSoftwareDecode)
+        streamId = FFmpegRTSPLibrary.createStream(
+            StreamConfig.Builder(url).useSoftwareDecode(useSoftwareDecode).build()
+        )
 
         if (streamId < 0) {
             showToast("创建流失败")
@@ -330,25 +336,28 @@ class SinglePlayerActivity : AppCompatActivity(), SurfaceHolder.Callback {
 
         Log.i(TAG, "🎥 异步开始录制 ID=$streamId, path=$outputPath")
 
-        FFmpegRTSPLibrary.startRecordingAsync(streamId, outputPath, object : FFmpegCallbacks.RecordingStartCallback {
+        FFmpegRTSPLibrary.startRecordingAsync(
+            streamId,
+            outputPath,
+            object : FFmpegCallbacks.RecordingStartCallback {
 
-            override fun onRecordingStarted(streamId: Int, outputPath: String) {
-                runOnUiThread {
-                    isRecording = true
-                    showToast("录制开始")
-                    Log.i(TAG, "✅录制开始: $outputPath")
-                    updateUI()
+                override fun onRecordingStarted(streamId: Int, outputPath: String) {
+                    runOnUiThread {
+                        isRecording = true
+                        showToast("录制开始")
+                        Log.i(TAG, "✅录制开始: $outputPath")
+                        updateUI()
+                    }
                 }
-            }
 
-            override fun onRecordingError(streamId: Int, errorCode: Int, errorMessage: String) {
-                runOnUiThread {
-                    showToast("录制开始失败: $errorMessage")
-                    Log.e(TAG, "❌ 录制开始失败: $errorMessage")
-                    updateUI()
+                override fun onRecordingError(streamId: Int, errorCode: Int, errorMessage: String) {
+                    runOnUiThread {
+                        showToast("录制开始失败: $errorMessage")
+                        Log.e(TAG, "❌ 录制开始失败: $errorMessage")
+                        updateUI()
+                    }
                 }
-            }
-        })
+            })
     }
 
     private fun stopRecording() {
@@ -544,7 +553,10 @@ class SinglePlayerActivity : AppCompatActivity(), SurfaceHolder.Callback {
                 videoCodec = currentVideoInfo!!.codec
 
                 // 📹 在日志中显示视频尺寸信息
-                Log.i(TAG, "📹 视频尺寸: ${videoWidth}x${videoHeight}, FPS: $videoFps, 编码: $videoCodec")
+                Log.i(
+                    TAG,
+                    "📹 视频尺寸: ${videoWidth}x${videoHeight}, FPS: $videoFps, 编码: $videoCodec"
+                )
             } else {
                 // 如果没有保存的视频信息，设置为等待状态
                 videoCodec = "waiting"
@@ -558,11 +570,15 @@ class SinglePlayerActivity : AppCompatActivity(), SurfaceHolder.Callback {
 
             if (videoWidth > 0 && videoHeight > 0) {
                 // 视频信息已准备好
-                statsBuilder.append(String.format(Locale.getDefault(),
-                    "分辨率: %d x %d\n" +
-                    "帧率: %d fps\n" +
-                    "编码格式: %s\n",
-                    videoWidth, videoHeight, videoFps, videoCodec))
+                statsBuilder.append(
+                    String.format(
+                        Locale.getDefault(),
+                        "分辨率: %d x %d\n" +
+                                "帧率: %d fps\n" +
+                                "编码格式: %s\n",
+                        videoWidth, videoHeight, videoFps, videoCodec
+                    )
+                )
             } else {
                 // 视频信息等待中
                 if ("waiting" == videoCodec) {
