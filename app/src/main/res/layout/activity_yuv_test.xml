@@ -2,6 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:clipToPadding="false"
     android:orientation="vertical"
     android:background="#1A1A2E">
 
@@ -24,6 +25,7 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1.5"
+        android:clipToPadding="false"
         android:fillViewport="true">
 
         <LinearLayout
@@ -45,7 +47,7 @@
                 android:paddingHorizontal="8dp"
                 android:singleLine="true" />
 
-            <!-- 流控制按钮 -->
+            <!-- 播放控制按钮 -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -53,24 +55,14 @@
                 android:orientation="horizontal">
 
                 <Button
-                    android:id="@+id/createStreamButton"
-                    android:layout_width="0dp"
-                    android:layout_height="36dp"
-                    android:layout_weight="1"
-                    android:text="创建"
-                    android:textSize="11sp"
-                    android:backgroundTint="#4CAF50"
-                    android:layout_marginEnd="2dp" />
-
-                <Button
                     android:id="@+id/startStreamButton"
                     android:layout_width="0dp"
                     android:layout_height="36dp"
                     android:layout_weight="1"
-                    android:text="启动"
+                    android:text="播放"
                     android:textSize="11sp"
                     android:backgroundTint="#2196F3"
-                    android:layout_marginHorizontal="2dp" />
+                    android:layout_marginEnd="4dp" />
 
                 <Button
                     android:id="@+id/stopStreamButton"
@@ -80,17 +72,7 @@
                     android:text="停止"
                     android:textSize="11sp"
                     android:backgroundTint="#FF9800"
-                    android:layout_marginHorizontal="2dp" />
-
-                <Button
-                    android:id="@+id/destroyStreamButton"
-                    android:layout_width="0dp"
-                    android:layout_height="36dp"
-                    android:layout_weight="1"
-                    android:text="销毁"
-                    android:textSize="11sp"
-                    android:backgroundTint="#F44336"
-                    android:layout_marginStart="2dp" />
+                    android:layout_marginStart="4dp" />
             </LinearLayout>
 
             <!-- 分隔标题: 模式1 只读观察 -->
@@ -301,7 +283,7 @@
                     android:id="@+id/statusTextView"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="状态: 未创建流"
+                    android:text="状态: 未创建播放器"
                     android:textColor="#E0E0E0"
                     android:textSize="11sp" />
 

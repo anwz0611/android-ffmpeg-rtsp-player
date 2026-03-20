@@ -3,6 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:clipToPadding="false"
     android:fillViewport="true">
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -34,7 +35,7 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/videoSurface" />
 
-        <!-- 流控制按钮：参考 SingleVideoActivity -->
+        <!-- 播放控制按钮 -->
         <LinearLayout
             android:id="@+id/streamControlLayout"
             android:layout_width="0dp"
@@ -46,31 +47,23 @@
             app:layout_constraintTop_toBottomOf="@+id/urlEditText">
 
             <Button
-                android:id="@+id/createStreamButton"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="8dp"
-                android:layout_weight="1"
-                android:text="创建流" />
-
-            <Button
                 android:id="@+id/startStreamButton"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="8dp"
                 android:layout_weight="1"
-                android:text="启动流" />
+                android:text="播放" />
 
             <Button
                 android:id="@+id/stopStreamButton"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="停止流" />
+                android:text="停止" />
 
         </LinearLayout>
 
-        <!-- 流管理按钮（只保留销毁流） -->
+        <!-- 播放器管理 -->
         <LinearLayout
             android:id="@+id/streamManageLayout"
             android:layout_width="0dp"
@@ -86,7 +79,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="销毁流" />
+                android:text="释放播放器" />
 
         </LinearLayout>
 
@@ -96,7 +89,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:text="状态: 未创建流"
+            android:text="状态: 未创建播放器"
             android:textSize="14sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"

@@ -3,9 +3,7 @@ package com.jxj.ffmpegrtspplayer
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
-import androidx.appcompat.app.AppCompatActivity
-
-class MainActivity : AppCompatActivity() {
+class MainActivity : BaseInsetsActivity() {
 
     private lateinit var btnSinglePlayer: Button
     private lateinit var btnMultiPlayer: Button
@@ -15,6 +13,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        applyEdgeToEdge(findViewById(android.R.id.content), top = true, bottom = true)
 
         initViews()
         setupClickListeners()
@@ -29,23 +28,19 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupClickListeners() {
         btnSinglePlayer.setOnClickListener {
-            val intent = Intent(this, SinglePlayerActivity::class.java)
-            startActivity(intent)
+            startActivity(Intent(this, SinglePlayerActivity::class.java))
         }
 
         btnMultiPlayer.setOnClickListener {
-            val intent = Intent(this, MultiPlayerActivity::class.java)
-            startActivity(intent)
+            startActivity(Intent(this, MultiPlayerActivity::class.java))
         }
 
         btnYuvTest.setOnClickListener {
-            val intent = Intent(this, YUVTestActivity::class.java)
-            startActivity(intent)
+            startActivity(Intent(this, YUVTestActivity::class.java))
         }
 
         btnTransformTest.setOnClickListener {
-            val intent = Intent(this, TransformTestActivity::class.java)
-            startActivity(intent)
+            startActivity(Intent(this, TransformTestActivity::class.java))
         }
     }
 }

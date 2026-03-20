@@ -1,9 +1,6 @@
 package com.jxj.ffmpegrtspplayer
 
-import android.Manifest
-import android.content.pm.PackageManager
 import android.os.Bundle
-import android.os.Environment
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
@@ -14,31 +11,31 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
-import com.jxj.ffmpegrtsp.lib.FFmpegCallbacks
-import com.jxj.ffmpegrtsp.lib.FFmpegRTSPLibrary
+import com.jxj.ffmpegrtsp.lib.PlayerStateSnapshot
 import com.jxj.ffmpegrtsp.lib.StreamConfig
+import com.jxj.ffmpegrtsp.lib.StreamPlayer
 import com.jxj.ffmpegrtsp.lib.VideoInfo
-import java.io.File
 import java.text.SimpleDateFormat
-import java.util.ArrayList
 import java.util.Date
-import java.util.List
 import java.util.Locale
 
 /**
- * 单个视频播放Activity（Kotlin版本）
+ * 单流播放示例。
+ *
+ * 适配新的 StreamPlayer 实例式 API，并演示：
+ * 1. 首次播放时按配置自动创建播放器
+ * 2. 显式调用 play/stop/release
+ * 3. 录制、状态监听、生命周期前后台通知
  */
-class SinglePlayerActivity : AppCompatActivity(), SurfaceHolder.Callback {
+class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
 
-    private val TAG = "SinglePlayerActivity"
+    companion object {
+        private const val TAG = "SinglePlayerActivity"
+        private const val UPDATE_INTERVAL_MS = 500L
+    }
 
-    // UI组件
     private lateinit var etRtspUrl: EditText
-    private lateinit var btnConnect: Button
     private lateinit var btnPlay: Button
     private lateinit var btnStop: Button
     private lateinit var btnRecord: Button
@@ -47,54 +44,43 @@ class SinglePlayerActivity : AppCompatActivity(), SurfaceHolder.Callback {
     private lateinit var tvStreamInfo: TextView
     private lateinit var tvRecordInfo: TextView
 
-    // 性能监控UI组件
     private lateinit var performanceMonitorCard: CardView
     private lateinit var performanceMonitorHeader: View
     private lateinit var performanceMonitorToggle: TextView
     private lateinit var performanceMonitorContent: View
     private lateinit var performanceMonitorTextView: TextView
 
-    // 流管理
-    private var streamId = -1
-    private var isStreamCreated = false
-    private var isPlaying = false
-    private var isRecording = false
-
-    // 视频信息（播放成功后保存的）
+    private var player: StreamPlayer? = null
     private var currentVideoInfo: VideoInfo? = null
-
-    // 性能监控
-    private var performanceMonitorHandler: Handler? = null
-    private var performanceMonitorRunnable: Runnable? = null
+    private var lastRecordingPath: String? = null
     private var isPerformanceMonitorExpanded = false
     private var isPerformanceMonitoring = false
     private var monitoringStartTime = 0L
     private var totalUpdates = 0L
-    private val latencyHistory: MutableList<Double> = ArrayList()
-    private val MAX_LATENCY_HISTORY = 100
-    private val UPDATE_INTERVAL_MS = 500L
+
+    private val performanceMonitorHandler = Handler(Looper.getMainLooper())
+    private val performanceMonitorRunnable = object : Runnable {
+        override fun run() {
+            if (!isPerformanceMonitoring) {
+                return
+            }
+            updatePerformanceStats()
+            performanceMonitorHandler.postDelayed(this, UPDATE_INTERVAL_MS)
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_single_player)
+        applyEdgeToEdge(findViewById(android.R.id.content), top = true, bottom = true)
 
-        Log.i(TAG, "🚀 SinglePlayerActivity 创建")
-
-        // 初始化UI
         initViews()
         setupListeners()
         updateUI()
-        checkPermissions()
-
-        // 设置日志级别
-        // FFmpegRTSPLibrary.enableLogging(true)
-
-        Log.i(TAG, "✅ SinglePlayerActivity 初始化完成")
     }
 
     private fun initViews() {
         etRtspUrl = findViewById(R.id.et_rtsp_url)
-        btnConnect = findViewById(R.id.btn_connect)
         btnPlay = findViewById(R.id.btn_play)
         btnStop = findViewById(R.id.btn_stop)
         btnRecord = findViewById(R.id.btn_record)
@@ -103,545 +89,310 @@ class SinglePlayerActivity : AppCompatActivity(), SurfaceHolder.Callback {
         tvStreamInfo = findViewById(R.id.tv_stream_info)
         tvRecordInfo = findViewById(R.id.tv_record_info)
 
-        // 性能监控UI组件
         performanceMonitorCard = findViewById(R.id.performanceMonitorCard)
         performanceMonitorHeader = findViewById(R.id.performanceMonitorHeader)
         performanceMonitorToggle = findViewById(R.id.performanceMonitorToggle)
         performanceMonitorContent = findViewById(R.id.performanceMonitorContent)
         performanceMonitorTextView = findViewById(R.id.performanceMonitorTextView)
 
-        // 初始化性能监控Handler
-        performanceMonitorHandler = Handler(Looper.getMainLooper())
-        performanceMonitorRunnable = Runnable {
-            if (isPerformanceMonitoring && streamId >= 0) {
-                updatePerformanceStats()
-                performanceMonitorHandler?.postDelayed(
-                    performanceMonitorRunnable!!,
-                    UPDATE_INTERVAL_MS
-                )
-            }
-        }
-
-        // 设置性能监控面板展开/折叠
-        performanceMonitorHeader.setOnClickListener { togglePerformanceMonitor() }
-
-        // 设置默认URL
-        etRtspUrl.setText("rtsp://stream.strba.sk:1935/strba/VYHLAD_JAZERO.stream")
-
-        // 设置Surface回调
+        etRtspUrl.setText("http://demo-videos.qnsdk.com/VR-Panorama-Equirect-Angular-4500k.mp4")
         surfaceView.holder.addCallback(this)
     }
 
     private fun setupListeners() {
-        btnConnect.setOnClickListener { connectStream() }
-        btnPlay.setOnClickListener { playStream() }
-        btnStop.setOnClickListener { stopStream() }
+        performanceMonitorHeader.setOnClickListener { togglePerformanceMonitor() }
+        btnPlay.setOnClickListener { ensurePlayerAndPlay() }
+        btnStop.setOnClickListener { stopPlayer() }
         btnRecord.setOnClickListener { toggleRecording() }
     }
 
-    private fun checkPermissions() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
-            != PackageManager.PERMISSION_GRANTED
-        ) {
-            ActivityCompat.requestPermissions(
-                this,
-                arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
-                1001
-            )
-        }
-    }
-
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == 1001) {
-            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                showToast("权限已授予")
-            } else {
-                showToast("需要存储权限才能录制视频")
-            }
-        }
-    }
-
-    // ============================================================================
-    // 流管理方法
-    // ============================================================================
-
-    private fun connectStream() {
+    private fun ensurePlayerAndPlay() {
         val url = etRtspUrl.text.toString().trim()
         if (url.isEmpty()) {
-            showToast("请输入RTSP URL")
+            showToast("请输入 RTSP 地址")
             return
         }
 
-        Log.i(TAG, "🚀 创建流: $url")
-
-        // 🔥 使用新的软件解码架构
-        val useSoftwareDecode = true // 强制使用软件解码进行测试
-        streamId = FFmpegRTSPLibrary.createStream(
-            StreamConfig.Builder(url).useSoftwareDecode(useSoftwareDecode).build()
-        )
-
-        if (streamId < 0) {
-            showToast("创建流失败")
-            Log.e(TAG, "❌创建流失败")
+        val currentPlayer = player
+        if (currentPlayer != null && !currentPlayer.isReleased()) {
+            currentPlayer.play()
             return
         }
-        FFmpegRTSPLibrary.setSurface(streamId, surfaceView.holder.surface)
-        isStreamCreated = true
-        isPlaying = false
-        isRecording = false
 
-        showToast("流创建成功: ID=$streamId")
-        Log.i(TAG, "✅流创建成功: ID=$streamId")
+        val config = StreamConfig.Builder(url)
+            .useSoftwareDecode(true)
+            .audioEnabled(true)
+            .enableDisconnectRecovery(true)
+            .disconnectRecoveryMaxAttempts(3)
+            .disconnectRecoveryIntervalMs(300)
+            .disconnectRecoveryNoPacketTimeoutMs(1500)
+            .disconnectRecoveryConnectTimeoutMs(3000)
+            .build()
 
+        player = StreamPlayer.playWithConfig(this, surfaceView, config)
+            .setOnStateChanged { state ->
+                Log.i(TAG, "state=${state.streamStateCode}")
+                syncState(state)
+            }
+            .setOnPlaybackStarted { videoInfo ->
+                currentVideoInfo = videoInfo
+                Log.i(TAG, "playback started: $videoInfo")
+                showToast("播放已开始")
+                startPerformanceMonitoring()
+                updateUI()
+            }
+            .setOnPlaybackStopped {
+                Log.i(TAG, "playback stopped")
+                stopPerformanceMonitoring()
+                updateUI()
+            }
+            .setOnRecordingStarted { outputPath ->
+                lastRecordingPath = outputPath
+                showToast("录制开始")
+                updateUI()
+            }
+            .setOnRecordingStopped {
+                showToast("录制已停止")
+                updateUI()
+            }
+            .setOnError { errorCode, errorMessage ->
+                Log.e(TAG, "player error: code=$errorCode, message=$errorMessage")
+                showToast("播放器错误: $errorMessage")
+                updateUI()
+            }
+
+        syncState(player?.getState())
+        showToast("播放器已创建并开始播放")
+    }
+
+    private fun stopPlayer() {
+        player?.stop()
+        stopPerformanceMonitoring()
         updateUI()
     }
-
-    private fun playStream() {
-        if (!isStreamCreated || streamId < 0) {
-            showToast("请先创建流")
-            return
-        }
-
-        Log.i(TAG, "🚀 异步启动流: ID=$streamId")
-
-        // 使用异步启动，避免阻塞UI线程
-        FFmpegRTSPLibrary.startPlayAsync(streamId, object : FFmpegCallbacks.PlaybackStartCallback {
-
-            override fun onPlaybackStarted(streamId: Int, videoInfo: VideoInfo?) {
-                runOnUiThread {
-                    isPlaying = true
-                    showToast("流启动成功")
-                    Log.i(TAG, "✅流启动成功")
-
-                    // 📹 保存视频信息
-                    currentVideoInfo = videoInfo
-                    if (videoInfo != null) {
-                        Log.i(TAG, "📹 视频信息就绪: $videoInfo")
-                    } else {
-                        Log.d(TAG, "📹 视频信息暂未就绪")
-                    }
-
-                    startPerformanceMonitoring()
-
-                    updateUI()
-                }
-            }
-
-            override fun onPlaybackError(streamId: Int, errorCode: Int, errorMessage: String) {
-                runOnUiThread {
-                    showToast("启动流失败: $errorMessage")
-                    Log.e(TAG, "❌$errorMessage")
-                    updateUI()
-                }
-            }
-        })
-    }
-
-    private fun stopStream() {
-        if (!isPlaying || streamId < 0) {
-            showToast("流未启动")
-            return
-        }
-
-        Log.i(TAG, "🛑 停止流: ID=$streamId")
-
-        FFmpegRTSPLibrary.stopPlayAsync(streamId, object : FFmpegCallbacks.PlaybackStopCallback {
-
-            override fun onPlaybackStopped(streamId: Int) {
-                runOnUiThread {
-                    isPlaying = false
-                    // 流停止后停止性能监控
-                    stopPerformanceMonitoring()
-                    updateUI()
-                }
-            }
-
-            override fun onPlaybackError(streamId: Int, errorCode: Int, errorMessage: String) {
-                runOnUiThread {
-                    isPlaying = false
-                    showToast("停止流失败: $errorMessage")
-                    Log.e(TAG, "❌停止流失败: $errorMessage")
-                    updateUI()
-                }
-            }
-        })
-        isPlaying = false
-        showToast("流停止成功")
-        Log.i(TAG, "✅流停止成功")
-
-        updateUI()
-    }
-
-    private fun destroyStream() {
-        if (!isStreamCreated || streamId < 0) {
-            showToast("没有可销毁的流")
-            return
-        }
-
-        Log.i(TAG, "🗑️销毁流: ID=$streamId")
-
-        val result = FFmpegRTSPLibrary.destroyStream(streamId)
-        if (result != 0) {
-            showToast("销毁流失败")
-            Log.e(TAG, "❌销毁流失败")
-            return
-        }
-
-        streamId = -1
-        isStreamCreated = false
-        isPlaying = false
-        isRecording = false
-
-        showToast("流销毁成功")
-        Log.i(TAG, "✅流销毁成功")
-
-        updateUI()
-    }
-
-    // ============================================================================
-    // 录制功能
-    // ============================================================================
 
     private fun toggleRecording() {
-        if (!isPlaying || streamId < 0) {
-            showToast("请先启动流")
+        val currentPlayer = player
+        if (currentPlayer == null || !currentPlayer.isPlaying()) {
+            showToast("请先开始播放")
             return
         }
 
-        if (!isRecording) {
-            startRecording()
-        } else {
-            stopRecording()
+        if (currentPlayer.isRecording()) {
+            currentPlayer.stopRecording()
+            return
         }
+
+        val outputFile = java.io.File(
+            getExternalFilesDir(null),
+            "recording_${System.currentTimeMillis()}.mp4"
+        )
+        lastRecordingPath = outputFile.absolutePath
+        currentPlayer.startRecording(outputFile.absolutePath)
     }
 
-    private fun startRecording() {
-        if (!isPlaying || streamId < 0) {
-            showToast("请先启动流")
+    private fun syncState(state: PlayerStateSnapshot?) {
+        if (state == null) {
+            updateUI()
             return
         }
 
-        if (isRecording) {
-            showToast("已在录制中")
-            return
-        }
+        currentVideoInfo = state.lastVideoInfo ?: currentVideoInfo
 
-        val outputPath = getExternalFilesDir(null).toString() + "/recording_" +
-                System.currentTimeMillis() + ".mp4"
-
-        Log.i(TAG, "🎥 异步开始录制 ID=$streamId, path=$outputPath")
-
-        FFmpegRTSPLibrary.startRecordingAsync(
-            streamId,
-            outputPath,
-            object : FFmpegCallbacks.RecordingStartCallback {
-
-                override fun onRecordingStarted(streamId: Int, outputPath: String) {
-                    runOnUiThread {
-                        isRecording = true
-                        showToast("录制开始")
-                        Log.i(TAG, "✅录制开始: $outputPath")
-                        updateUI()
-                    }
-                }
-
-                override fun onRecordingError(streamId: Int, errorCode: Int, errorMessage: String) {
-                    runOnUiThread {
-                        showToast("录制开始失败: $errorMessage")
-                        Log.e(TAG, "❌ 录制开始失败: $errorMessage")
-                        updateUI()
-                    }
-                }
-            })
-    }
-
-    private fun stopRecording() {
-        if (!isRecording || streamId < 0) {
-            showToast("没有在录制")
-            return
-        }
-
-        Log.i(TAG, "🛑 停止录制: ID=$streamId")
-
-        val result = FFmpegRTSPLibrary.stopRecording(streamId)
-        if (result == 0) {
-            isRecording = false
-            showToast("录制停止成功")
-            Log.i(TAG, "✅录制停止成功")
-        } else {
-            showToast("停止录制失败")
-            Log.e(TAG, "❌停止录制失败")
+        if (!state.isPlaying) {
+            stopPerformanceMonitoring()
         }
 
         updateUI()
     }
 
-
-    // ============================================================================
-    // UI更新
-    // ============================================================================
+    private fun releasePlayer() {
+        stopPerformanceMonitoring()
+        player?.release()
+        player = null
+        currentVideoInfo = null
+        lastRecordingPath = null
+        updateUI()
+    }
 
     private fun updateUI() {
         runOnUiThread {
-            // 更新按钮状态
-            btnConnect.isEnabled = !isStreamCreated
-            btnPlay.isEnabled = isStreamCreated && !isPlaying
+            val currentPlayer = player
+            val state = currentPlayer?.getState()
+            val hasPlayer = currentPlayer != null && currentPlayer.isReleased() == false
+            val isPlaying = currentPlayer?.isPlaying() == true
+            val isRecording = currentPlayer?.isRecording() == true
+            val streamId = currentPlayer?.getStreamId() ?: -1
+
+            btnPlay.isEnabled = !isPlaying
             btnStop.isEnabled = isPlaying
             btnRecord.isEnabled = isPlaying
+            btnRecord.text = if (isRecording) "停止录制" else "开始录制"
 
-            // 性能监控面板显示/隐藏
-            if (isPlaying && streamId >= 0) {
-                performanceMonitorCard.visibility = View.VISIBLE
-            } else {
-                performanceMonitorCard.visibility = View.GONE
+            performanceMonitorCard.visibility = if (isPlaying) View.VISIBLE else View.GONE
+            if (!isPlaying) {
                 isPerformanceMonitorExpanded = false
                 performanceMonitorContent.visibility = View.GONE
                 performanceMonitorToggle.text = "▼"
             }
 
-            // 更新状态显示
-            val status = "状态: " + when {
-                !isStreamCreated -> "未创建流"
-                !isPlaying -> "流已创建，未启动"
-                isRecording -> "播放中，录制中"
-                else -> "播放中"
+            val statusText = when {
+                !hasPlayer -> "状态: 未开始播放"
+                isRecording -> "状态: 播放中，录制中"
+                isPlaying -> "状态: 播放中"
+                else -> "状态: 待播放"
             }
+            tvStatus.text = statusText
 
-            tvStatus.text = status
+            val infoBuilder = StringBuilder("统计: 单流模式")
+            if (streamId >= 0) {
+                infoBuilder.append(" | 流ID: ").append(streamId)
+            }
+            state?.currentUrl?.takeIf { it.isNotBlank() }?.let {
+                infoBuilder.append(" | URL: ").append(it)
+            }
+            currentVideoInfo?.let {
+                infoBuilder.append(" | ").append(it.width).append("x").append(it.height)
+                infoBuilder.append(" @ ").append(it.fps).append("fps")
+                infoBuilder.append(" | ").append(it.codec)
+            }
+            tvStreamInfo.text = infoBuilder.toString()
 
-            // 更新统计信息
-            var stats = "统计: 单流模式"
-            if (isStreamCreated) {
-                stats += " | 流ID: $streamId"
+            tvRecordInfo.text = when {
+                isRecording -> "录制中: ${lastRecordingPath ?: "路径待回调"}"
+                !lastRecordingPath.isNullOrBlank() -> "最近录制: $lastRecordingPath"
+                else -> "录制状态: 未录制"
             }
-            if (isRecording) {
-                stats += " | 录制中"
-            }
-            tvStreamInfo.text = stats
         }
     }
-
-    private fun showToast(message: String) {
-        runOnUiThread {
-            Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    // ============================================================================
-    // Surface管理
-    // ============================================================================
 
     override fun surfaceCreated(holder: SurfaceHolder) {
-        Log.i(TAG, "🎬 Surface创建")
-
-        if (streamId >= 0) {
-            // 设置Surface到当前流
-            val result = FFmpegRTSPLibrary.setSurface(streamId, holder.surface)
-            if (result == 0) {
-                Log.i(TAG, "✅Surface设置成功")
-                showToast("Surface设置成功")
-            } else {
-                Log.e(TAG, "❌Surface设置失败")
-                showToast("Surface设置失败")
-            }
-        }
+        updateUI()
     }
 
     override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
-        Log.i(TAG, "🎬 Surface变化: $width x $height")
+        Log.d(TAG, "surface changed: ${width}x$height")
     }
 
     override fun surfaceDestroyed(holder: SurfaceHolder) {
-        Log.i(TAG, "🗑️Surface销毁")
-
-        if (streamId >= 0) {
-            FFmpegRTSPLibrary.onSurfaceDestroyed(streamId)
-        }
+        Log.d(TAG, "surface destroyed")
     }
-
-    // ============================================================================
-    // 性能监控方法
-    // ============================================================================
 
     private fun togglePerformanceMonitor() {
         isPerformanceMonitorExpanded = !isPerformanceMonitorExpanded
-        if (isPerformanceMonitorExpanded) {
-            performanceMonitorContent.visibility = View.VISIBLE
-            performanceMonitorToggle.text = "▲"
-        } else {
-            performanceMonitorContent.visibility = View.GONE
-            performanceMonitorToggle.text = "▼"
-        }
+        performanceMonitorContent.visibility = if (isPerformanceMonitorExpanded) View.VISIBLE else View.GONE
+        performanceMonitorToggle.text = if (isPerformanceMonitorExpanded) "▲" else "▼"
     }
 
     private fun startPerformanceMonitoring() {
-        if (streamId < 0 || isPerformanceMonitoring) {
+        if (isPerformanceMonitoring) {
             return
         }
-
         isPerformanceMonitoring = true
         monitoringStartTime = System.currentTimeMillis()
         totalUpdates = 0
-        // latencyHistory.clear() // 这个方法在Java中可能不存在
-
-        // 自动展开监控面板
         if (!isPerformanceMonitorExpanded) {
             togglePerformanceMonitor()
         }
-
-        // 开始更新循环
-        performanceMonitorHandler?.post(performanceMonitorRunnable!!)
-
-        Log.i(TAG, "✅开始性能监控: streamId=$streamId")
+        performanceMonitorHandler.removeCallbacks(performanceMonitorRunnable)
+        performanceMonitorHandler.post(performanceMonitorRunnable)
     }
 
     private fun stopPerformanceMonitoring() {
-        if (!isPerformanceMonitoring) {
-            return
-        }
-
         isPerformanceMonitoring = false
-        performanceMonitorHandler?.removeCallbacks(performanceMonitorRunnable!!)
-        monitoringStartTime = 0
-        totalUpdates = 0
-        // latencyHistory.clear()
-
-        Log.i(TAG, "🛑 停止性能监控")
+        monitoringStartTime = 0L
+        totalUpdates = 0L
+        performanceMonitorHandler.removeCallbacks(performanceMonitorRunnable)
     }
 
     private fun updatePerformanceStats() {
-        if (streamId < 0) {
-            return
+        val currentPlayer = player ?: return
+        val statsBuilder = StringBuilder()
+        val snapshot = currentPlayer.getState()
+        val now = System.currentTimeMillis()
+
+        statsBuilder.append("播放器状态监控\n\n")
+        statsBuilder.append("更新时间: ")
+            .append(SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date(now)))
+            .append('\n')
+        statsBuilder.append("流ID: ").append(currentPlayer.getStreamId()).append('\n')
+        statsBuilder.append("更新次数: ").append(++totalUpdates).append('\n')
+
+        if (monitoringStartTime > 0L) {
+            statsBuilder.append("监控时长: ")
+                .append(formatDuration(now - monitoringStartTime))
+                .append('\n')
         }
 
-        try {
-            val statsBuilder = StringBuilder()
+        statsBuilder.append('\n')
+        statsBuilder.append("当前状态: ").append(snapshot.streamStateCode).append('\n')
+        statsBuilder.append("播放中: ").append(snapshot.isPlaying).append('\n')
+        statsBuilder.append("录制中: ").append(snapshot.isRecording).append('\n')
+        statsBuilder.append("待处理操作: ").append(snapshot.isOperationPending).append('\n')
 
-            // 基本信息
-            statsBuilder.append("═══════════════════════════════════════\n")
-            statsBuilder.append("📊 性能监控\n")
-            statsBuilder.append("═══════════════════════════════════════\n\n")
-
-            val sdf = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
-            statsBuilder.append("⏰ 更新时间: ").append(sdf.format(Date())).append("\n")
-            statsBuilder.append("🆔 流ID: ").append(streamId).append("\n")
-            statsBuilder.append("🔄 更新次数: ").append(++totalUpdates).append("\n")
-
-            val currentTime = System.currentTimeMillis()
-            if (monitoringStartTime > 0) {
-                val elapsed = currentTime - monitoringStartTime
-                statsBuilder.append("⏱️ 监控时长: ").append(formatDuration(elapsed)).append("\n")
-            }
-            statsBuilder.append("\n")
-
-            // 🔥 视频尺寸信息 - 使用播放成功时保存的视频信息
-            var videoWidth = 0
-            var videoHeight = 0
-            var videoFps = 0
-            var videoCodec = "unknown"
-
-            // 使用播放成功时保存的视频信息
-            if (currentVideoInfo != null) {
-                videoWidth = currentVideoInfo!!.width
-                videoHeight = currentVideoInfo!!.height
-                videoFps = currentVideoInfo!!.fps
-                videoCodec = currentVideoInfo!!.codec
-
-                // 📹 在日志中显示视频尺寸信息
-                Log.i(
-                    TAG,
-                    "📹 视频尺寸: ${videoWidth}x${videoHeight}, FPS: $videoFps, 编码: $videoCodec"
-                )
-            } else {
-                // 如果没有保存的视频信息，设置为等待状态
-                videoCodec = "waiting"
-                Log.d(TAG, "📹 视频信息等待中...")
-            }
-
-            // 🔥 新增：视频尺寸信息显示
-            statsBuilder.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
-            statsBuilder.append("📹 视频信息\n")
-            statsBuilder.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
-
-            if (videoWidth > 0 && videoHeight > 0) {
-                // 视频信息已准备好
-                statsBuilder.append(
-                    String.format(
-                        Locale.getDefault(),
-                        "分辨率: %d x %d\n" +
-                                "帧率: %d fps\n" +
-                                "编码格式: %s\n",
-                        videoWidth, videoHeight, videoFps, videoCodec
-                    )
-                )
-            } else {
-                // 视频信息等待中
-                if ("waiting" == videoCodec) {
-                    statsBuilder.append("🔄 正在解析视频信息...\n")
-                } else {
-                    statsBuilder.append("⏳ 等待视频流...\n")
-                }
-            }
-            statsBuilder.append("\n")
-
-            val statsText = statsBuilder.toString()
-            runOnUiThread {
-                performanceMonitorTextView?.text = statsText
-            }
-
-        } catch (e: Exception) {
-            Log.e(TAG, "更新性能统计异常", e)
+        if (snapshot.lastErrorCode != null || !snapshot.lastErrorMessage.isNullOrBlank()) {
+            statsBuilder.append("最近错误: ")
+                .append(snapshot.lastErrorCode)
+                .append(" / ")
+                .append(snapshot.lastErrorMessage)
+                .append('\n')
         }
+
+        currentVideoInfo?.let {
+            statsBuilder.append('\n')
+            statsBuilder.append("视频信息\n")
+            statsBuilder.append("分辨率: ").append(it.width).append(" x ").append(it.height).append('\n')
+            statsBuilder.append("帧率: ").append(it.fps).append(" fps\n")
+            statsBuilder.append("编码: ").append(it.codec).append('\n')
+        }
+
+        val streamStats = runCatching { currentPlayer.getStreamStats() }.getOrNull()
+        if (!streamStats.isNullOrBlank()) {
+            statsBuilder.append('\n')
+            statsBuilder.append("底层统计\n")
+            statsBuilder.append(streamStats)
+        }
+
+        performanceMonitorTextView.text = statsBuilder.toString()
     }
 
     private fun formatDuration(milliseconds: Long): String {
         val seconds = milliseconds / 1000
         val minutes = seconds / 60
         val hours = minutes / 60
-
-        return if (hours > 0) {
-            String.format(Locale.getDefault(), "%d小时%d分%d秒", hours, minutes % 60, seconds % 60)
-        } else if (minutes > 0) {
-            String.format(Locale.getDefault(), "%d分%d秒", minutes, seconds % 60)
-        } else {
-            String.format(Locale.getDefault(), "%d秒", seconds)
+        return when {
+            hours > 0 -> String.format(
+                Locale.getDefault(),
+                "%d小时%d分%d秒",
+                hours,
+                minutes % 60,
+                seconds % 60
+            )
+            minutes > 0 -> String.format(Locale.getDefault(), "%d分%d秒", minutes, seconds % 60)
+            else -> String.format(Locale.getDefault(), "%d秒", seconds)
         }
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-
-        // 停止性能监控
-        stopPerformanceMonitoring()
-
-        // 清理Handler
-        performanceMonitorHandler?.removeCallbacks(performanceMonitorRunnable!!)
-
-        if (streamId >= 0) {
-            FFmpegRTSPLibrary.destroyAllStreamsAsync()
-        }
+    private fun showToast(message: String) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
 
     override fun onResume() {
         super.onResume()
-        Log.i(TAG, "📱 应用恢复")
-        FFmpegRTSPLibrary.onAppForeground()
-        // 恢复时如果流在运行，重新开始监控
-        if (isPlaying && streamId >= 0 && !isPerformanceMonitoring) {
+        StreamPlayer.onAppForeground()
+        if (player?.isPlaying() == true) {
             startPerformanceMonitoring()
         }
     }
 
     override fun onPause() {
+        StreamPlayer.onAppBackground()
         super.onPause()
-        Log.i(TAG, "📱 应用暂停")
-        FFmpegRTSPLibrary.onAppBackground()
-        // 暂停时停止性能监控更新（可选，也可以继续监控）
-        // stopPerformanceMonitoring();
+    }
+
+    override fun onDestroy() {
+        performanceMonitorHandler.removeCallbacks(performanceMonitorRunnable)
+        releasePlayer()
+        super.onDestroy()
     }
 }
