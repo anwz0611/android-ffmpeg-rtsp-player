@@ -65,3 +65,12 @@ aar 包含 arm64-v8a、armeabi-v7a、x86_64 架构，如只需要特定架构请
 ## 许可证
 
 GPL v2，商业使用请联系作者获取授权。
+## Star History
+
+<a href="https://www.star-history.com/?repos=anwz0611%2Fandroid-ffmpeg-rtsp-player&type=date&legend=top-left">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/image?repos=anwz0611/android-ffmpeg-rtsp-player&type=date&theme=dark&legend=top-left" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/image?repos=anwz0611/android-ffmpeg-rtsp-player&type=date&legend=top-left" />
+   <img alt="Star History Chart" src="https://api.star-history.com/image?repos=anwz0611/android-ffmpeg-rtsp-player&type=date&legend=top-left" />
+ </picture>
+</a>
