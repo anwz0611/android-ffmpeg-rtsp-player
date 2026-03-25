@@ -1,7 +1,6 @@
 package com.jxj.ffmpegrtspplayer
 
 import android.os.Bundle
-import android.os.Environment
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.SurfaceHolder
@@ -18,6 +17,7 @@ import com.jxj.ffmpegrtsp.lib.capture.FrameCaptureRequest
 import com.jxj.ffmpegrtsp.lib.capture.FrameCaptureResult
 import java.io.File
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.concurrent.thread
 
 class MultiPlayerActivity : BaseInsetsActivity() {
 
@@ -148,7 +148,11 @@ class MultiPlayerActivity : BaseInsetsActivity() {
         private var btnStopStream: Button? = null
         private var btnRecordStream: Button? = null
         private var btnTakePhoto: Button? = null
+        private var btnDestroyStream: Button? = null
         private var lastRecordPath: String? = null
+        private var pendingRecordingFile: File? = null
+        private var pendingRecordingDisplayName: String? = null
+        private var requestedRecordingFile: File? = null
 
         fun bind(view: View) {
             this.view = view
@@ -160,6 +164,7 @@ class MultiPlayerActivity : BaseInsetsActivity() {
             btnStopStream = view.findViewById(R.id.btn_stop_stream)
             btnRecordStream = view.findViewById(R.id.btn_record_stream)
             btnTakePhoto = view.findViewById(R.id.btn_take_photo)
+            btnDestroyStream = view.findViewById(R.id.btn_destroy_stream)
             val btnRemoveStream: Button = view.findViewById(R.id.btn_remove_stream)
             surfaceView = view.findViewById(R.id.surface_view)
 
@@ -171,6 +176,7 @@ class MultiPlayerActivity : BaseInsetsActivity() {
             btnStopStream?.setOnClickListener { stop() }
             btnRecordStream?.setOnClickListener { toggleRecording() }
             btnTakePhoto?.setOnClickListener { takePhoto() }
+            btnDestroyStream?.setOnClickListener { destroy() }
             btnRemoveStream.setOnClickListener { removeStream(this) }
 
             updateUi()
@@ -201,15 +207,15 @@ class MultiPlayerActivity : BaseInsetsActivity() {
                 }
                 .setOnRecordingStarted { outputPath ->
                     runOnUiThread {
-                        lastRecordPath = outputPath
-                        updateStats("录制中: $outputPath")
+                        Log.i(TAG, "player[$displayId] recording started: $outputPath")
+                        pendingRecordingFile = File(outputPath)
+                        updateStats("录制中: ${lastRecordPath ?: "相册路径待生成"}")
                         updateUi()
                     }
                 }
                 .setOnRecordingStopped {
                     runOnUiThread {
-                        updateStats("录制已停止")
-                        updateUi()
+                        importPendingRecordingToAlbum()
                     }
                 }
                 .setOnError { errorCode, errorMessage ->
@@ -236,6 +242,18 @@ class MultiPlayerActivity : BaseInsetsActivity() {
             updateUi()
         }
 
+        fun destroy() {
+            player?.release()
+            player = null
+            pendingRecordingFile = null
+            pendingRecordingDisplayName = null
+            requestedRecordingFile = null
+            lastRecordPath = null
+            updateStatus("已销毁")
+            updateUi()
+            updateStreamCount()
+        }
+
         private fun toggleRecording() {
             val currentPlayer = player
             if (currentPlayer == null || !currentPlayer.isPlaying()) {
@@ -248,13 +266,23 @@ class MultiPlayerActivity : BaseInsetsActivity() {
                 return
             }
 
-            val outputFile = File(
-                getExternalFilesDir(Environment.DIRECTORY_MOVIES),
-                "multi_recording_${displayId}_${System.currentTimeMillis()}.mp4"
-            )
-            lastRecordPath = outputFile.absolutePath
-            currentPlayer.startRecording(outputFile.absolutePath)
-            updateUi()
+            runWithMediaStoreWriteAccess(onGranted = {
+                val displayName = "multi_recording_${displayId}_${System.currentTimeMillis()}.mp4"
+                val outputFile = MediaStoreSaver.createPendingFile(
+                    this@MultiPlayerActivity,
+                    MediaStoreSaver.Collection.VIDEO,
+                    displayName
+                )
+                requestedRecordingFile = outputFile
+                pendingRecordingFile = outputFile
+                pendingRecordingDisplayName = displayName
+                lastRecordPath = MediaStoreSaver.buildAlbumDisplayPath(
+                    MediaStoreSaver.Collection.VIDEO,
+                    displayName
+                )
+                currentPlayer.startRecording(outputFile.absolutePath)
+                updateUi()
+            })
         }
 
         private fun takePhoto() {
@@ -264,49 +292,41 @@ class MultiPlayerActivity : BaseInsetsActivity() {
                 return
             }
 
-            val pictureDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES)
-            if (pictureDir == null) {
-                toast("无法获取截图目录")
-                return
-            }
-            if (!pictureDir.exists() && !pictureDir.mkdirs()) {
-                toast("创建截图目录失败")
-                return
-            }
+            runWithMediaStoreWriteAccess(onGranted = {
+                val displayName = "capture_${displayId}_${System.currentTimeMillis()}.jpg"
+                val outputFile = MediaStoreSaver.createPendingFile(
+                    this@MultiPlayerActivity,
+                    MediaStoreSaver.Collection.IMAGE,
+                    displayName
+                )
+                val request = FrameCaptureRequest.Builder()
+                    .targetWidth(960)
+                    .quality(90)
+                    .timeoutMs(2500)
+                    .imageFormat(FrameCaptureRequest.ImageFormat.JPEG)
+                    .outputPath(outputFile.absolutePath)
+                    .returnBitmap(false)
+                    .returnBytes(false)
+                    .build()
 
-            val outputFile = File(
-                pictureDir,
-                "capture_${displayId}_${System.currentTimeMillis()}.jpg"
-            )
-            val request = FrameCaptureRequest.Builder()
-                .targetWidth(960)
-                .quality(90)
-                .timeoutMs(2500)
-                .imageFormat(FrameCaptureRequest.ImageFormat.JPEG)
-                .outputPath(outputFile.absolutePath)
-                .returnBitmap(false)
-                .returnBytes(false)
-                .build()
-
-            currentPlayer.captureFrame(
-                request,
-                { result: FrameCaptureResult ->
-                    val path = result.outputPath ?: outputFile.absolutePath
-                    Log.d(TAG, "capture success: $path")
-                    toast("截图成功: ${File(path).name}")
-                    updateStats("截图成功: ${File(path).name}")
-                },
-                { errorCode, errorMessage ->
-                    Log.e(TAG, "capture failed: $errorCode, $errorMessage")
-                    toast("截图失败: $errorMessage")
-                    updateStats("截图失败: $errorMessage")
-                }
-            )
+                currentPlayer.captureFrame(
+                    request,
+                    { result: FrameCaptureResult ->
+                        val path = result.outputPath ?: outputFile.absolutePath
+                        Log.d(TAG, "capture success: $path")
+                        importCapturedPhotoToAlbum(outputFile, displayName)
+                    },
+                    { errorCode, errorMessage ->
+                        Log.e(TAG, "capture failed: $errorCode, $errorMessage")
+                        toast("截图失败: $errorMessage")
+                        updateStats("截图失败: $errorMessage")
+                    }
+                )
+            })
         }
 
         fun release() {
-            player?.release()
-            player = null
+            destroy()
             surfaceView?.holder?.removeCallback(this)
             updateStreamCount()
         }
@@ -334,6 +354,7 @@ class MultiPlayerActivity : BaseInsetsActivity() {
             btnStopStream?.isEnabled = isPlaying
             btnRecordStream?.isEnabled = isPlaying
             btnTakePhoto?.isEnabled = isPlaying
+            btnDestroyStream?.isEnabled = hasPlayer
             btnRecordStream?.text = if (isRecording) "停止录制" else "录制"
 
             if (!hasPlayer) {
@@ -372,6 +393,89 @@ class MultiPlayerActivity : BaseInsetsActivity() {
 
         private fun updateStats(stats: String) {
             tvStreamStats?.text = "状态: $stats"
+        }
+
+        private fun importPendingRecordingToAlbum() {
+            val sourceFile = pendingRecordingFile
+            val displayName = pendingRecordingDisplayName
+            if (sourceFile == null || displayName.isNullOrBlank()) {
+                toast("录制已停止")
+                updateUi()
+                return
+            }
+
+            pendingRecordingFile = null
+            pendingRecordingDisplayName = null
+            updateStats("录制已停止，正在保存到相册")
+            updateUi()
+
+            thread(name = "multi-record-import-$displayId") {
+                runCatching {
+                    val actualSource = when {
+                        MediaStoreSaver.awaitFileReady(sourceFile) -> sourceFile
+                        requestedRecordingFile != null &&
+                            requestedRecordingFile != sourceFile &&
+                            MediaStoreSaver.awaitFileReady(requestedRecordingFile!!) -> requestedRecordingFile!!
+                        else -> throw IllegalStateException("源文件不存在或未完成写入: ${sourceFile.absolutePath}")
+                    }
+                    val savedMedia = MediaStoreSaver.saveToAlbum(
+                        context = this@MultiPlayerActivity,
+                        sourceFile = actualSource,
+                        displayName = displayName,
+                        mimeType = "video/mp4",
+                        collection = MediaStoreSaver.Collection.VIDEO
+                    )
+                    if (actualSource.exists()) {
+                        actualSource.delete()
+                    }
+                    savedMedia
+                }.onSuccess { savedMedia ->
+                    runOnUiThread {
+                        requestedRecordingFile = null
+                        lastRecordPath = savedMedia.displayPath
+                        toast("流 #$displayId 录制已保存到相册")
+                        updateStats("最近录制: ${savedMedia.displayPath}")
+                        updateUi()
+                    }
+                }.onFailure { error ->
+                    Log.e(TAG, "player[$displayId] import recording failed", error)
+                    runOnUiThread {
+                        requestedRecordingFile = null
+                        lastRecordPath = sourceFile.absolutePath
+                        toast("流 #$displayId 保存录制失败: ${error.message}")
+                        updateStats("保存失败，临时文件: ${sourceFile.absolutePath}")
+                        updateUi()
+                    }
+                }
+            }
+        }
+
+        private fun importCapturedPhotoToAlbum(sourceFile: File, displayName: String) {
+            updateStats("截图完成，正在保存到相册")
+            thread(name = "multi-image-import-$displayId") {
+                runCatching {
+                    val savedMedia = MediaStoreSaver.saveToAlbum(
+                        context = this@MultiPlayerActivity,
+                        sourceFile = sourceFile,
+                        displayName = displayName,
+                        mimeType = "image/jpeg",
+                        collection = MediaStoreSaver.Collection.IMAGE
+                    )
+                    sourceFile.delete()
+                    savedMedia
+                }.onSuccess { savedMedia ->
+                    runOnUiThread {
+                        toast("截图已保存到相册")
+                        updateStats("截图成功: ${savedMedia.displayPath}")
+                    }
+                }.onFailure { error ->
+                    Log.e(TAG, "player[$displayId] import capture failed", error)
+                    runOnUiThread {
+                        toast("截图保存失败: ${error.message}")
+                        updateStats("截图保存失败，临时文件: ${sourceFile.absolutePath}")
+                    }
+                }
+            }
         }
     }
 }

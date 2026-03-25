@@ -47,6 +47,7 @@ class YUVTestActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
     private lateinit var urlEditText: EditText
     private lateinit var startStreamButton: Button
     private lateinit var stopStreamButton: Button
+    private lateinit var destroyStreamButton: Button
     private lateinit var registerObserverButton: Button
     private lateinit var unregisterObserverButton: Button
     private lateinit var registerFilterButton: Button
@@ -110,6 +111,7 @@ class YUVTestActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
         urlEditText = findViewById(R.id.urlEditText)
         startStreamButton = findViewById(R.id.startStreamButton)
         stopStreamButton = findViewById(R.id.stopStreamButton)
+        destroyStreamButton = findViewById(R.id.destroyStreamButton)
         registerObserverButton = findViewById(R.id.registerObserverButton)
         unregisterObserverButton = findViewById(R.id.unregisterObserverButton)
         registerFilterButton = findViewById(R.id.registerFilterButton)
@@ -136,6 +138,7 @@ class YUVTestActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
     private fun setupListeners() {
         startStreamButton.setOnClickListener { ensurePlayerAndPlay() }
         stopStreamButton.setOnClickListener { player?.stop() }
+        destroyStreamButton.setOnClickListener { releasePlayer() }
         registerObserverButton.setOnClickListener { registerObserver() }
         unregisterObserverButton.setOnClickListener { unregisterObserver() }
         registerFilterButton.setOnClickListener { registerFilter() }

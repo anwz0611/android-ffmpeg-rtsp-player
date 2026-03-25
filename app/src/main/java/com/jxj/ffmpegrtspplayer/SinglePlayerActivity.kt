@@ -16,9 +16,11 @@ import com.jxj.ffmpegrtsp.lib.PlayerStateSnapshot
 import com.jxj.ffmpegrtsp.lib.StreamConfig
 import com.jxj.ffmpegrtsp.lib.StreamPlayer
 import com.jxj.ffmpegrtsp.lib.VideoInfo
+import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlin.concurrent.thread
 
 /**
  * 单流播放示例。
@@ -39,6 +41,7 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
     private lateinit var btnPlay: Button
     private lateinit var btnStop: Button
     private lateinit var btnRecord: Button
+    private lateinit var btnDestroy: Button
     private lateinit var surfaceView: SurfaceView
     private lateinit var tvStatus: TextView
     private lateinit var tvStreamInfo: TextView
@@ -53,6 +56,9 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
     private var player: StreamPlayer? = null
     private var currentVideoInfo: VideoInfo? = null
     private var lastRecordingPath: String? = null
+    private var pendingRecordingFile: File? = null
+    private var pendingRecordingDisplayName: String? = null
+    private var requestedRecordingFile: File? = null
     private var isPerformanceMonitorExpanded = false
     private var isPerformanceMonitoring = false
     private var monitoringStartTime = 0L
@@ -84,6 +90,7 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
         btnPlay = findViewById(R.id.btn_play)
         btnStop = findViewById(R.id.btn_stop)
         btnRecord = findViewById(R.id.btn_record)
+        btnDestroy = findViewById(R.id.btn_destroy)
         surfaceView = findViewById(R.id.surface_view)
         tvStatus = findViewById(R.id.tv_status)
         tvStreamInfo = findViewById(R.id.tv_stream_info)
@@ -104,6 +111,7 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
         btnPlay.setOnClickListener { ensurePlayerAndPlay() }
         btnStop.setOnClickListener { stopPlayer() }
         btnRecord.setOnClickListener { toggleRecording() }
+        btnDestroy.setOnClickListener { releasePlayer() }
     }
 
     private fun ensurePlayerAndPlay() {
@@ -121,12 +129,6 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
 
         val config = StreamConfig.Builder(url)
             .useSoftwareDecode(true)
-            .audioEnabled(true)
-            .enableDisconnectRecovery(true)
-            .disconnectRecoveryMaxAttempts(3)
-            .disconnectRecoveryIntervalMs(300)
-            .disconnectRecoveryNoPacketTimeoutMs(1500)
-            .disconnectRecoveryConnectTimeoutMs(3000)
             .build()
 
         player = StreamPlayer.playWithConfig(this, surfaceView, config)
@@ -135,30 +137,40 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
                 syncState(state)
             }
             .setOnPlaybackStarted { videoInfo ->
-                currentVideoInfo = videoInfo
-                Log.i(TAG, "playback started: $videoInfo")
-                showToast("播放已开始")
-                startPerformanceMonitoring()
-                updateUI()
+                runOnUiThread {
+                    currentVideoInfo = videoInfo
+                    Log.i(TAG, "playback started: $videoInfo")
+                    showToast("播放已开始")
+                    startPerformanceMonitoring()
+                    updateUI()
+                }
             }
             .setOnPlaybackStopped {
-                Log.i(TAG, "playback stopped")
-                stopPerformanceMonitoring()
-                updateUI()
+                runOnUiThread {
+                    Log.i(TAG, "playback stopped")
+                    stopPerformanceMonitoring()
+                    updateUI()
+                }
             }
             .setOnRecordingStarted { outputPath ->
-                lastRecordingPath = outputPath
-                showToast("录制开始")
-                updateUI()
+                runOnUiThread {
+                    Log.i(TAG, "recording started: $outputPath")
+                    pendingRecordingFile = File(outputPath)
+                    showToast("录制开始")
+                    updateUI()
+                }
             }
             .setOnRecordingStopped {
-                showToast("录制已停止")
-                updateUI()
+                runOnUiThread {
+                    importPendingRecordingToAlbum()
+                }
             }
             .setOnError { errorCode, errorMessage ->
-                Log.e(TAG, "player error: code=$errorCode, message=$errorMessage")
-                showToast("播放器错误: $errorMessage")
-                updateUI()
+                runOnUiThread {
+                    Log.e(TAG, "player error: code=$errorCode, message=$errorMessage")
+                    showToast("播放器错误: $errorMessage")
+                    updateUI()
+                }
             }
 
         syncState(player?.getState())
@@ -183,12 +195,23 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
             return
         }
 
-        val outputFile = java.io.File(
-            getExternalFilesDir(null),
-            "recording_${System.currentTimeMillis()}.mp4"
-        )
-        lastRecordingPath = outputFile.absolutePath
-        currentPlayer.startRecording(outputFile.absolutePath)
+        runWithMediaStoreWriteAccess(onGranted = {
+            val displayName = "recording_${System.currentTimeMillis()}.mp4"
+            val outputFile = MediaStoreSaver.createPendingFile(
+                this,
+                MediaStoreSaver.Collection.VIDEO,
+                displayName
+            )
+            requestedRecordingFile = outputFile
+            pendingRecordingFile = outputFile
+            pendingRecordingDisplayName = displayName
+            lastRecordingPath = MediaStoreSaver.buildAlbumDisplayPath(
+                MediaStoreSaver.Collection.VIDEO,
+                displayName
+            )
+            currentPlayer.startRecording(outputFile.absolutePath)
+            updateUI()
+        })
     }
 
     private fun syncState(state: PlayerStateSnapshot?) {
@@ -212,7 +235,63 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
         player = null
         currentVideoInfo = null
         lastRecordingPath = null
+        pendingRecordingFile = null
+        pendingRecordingDisplayName = null
+        requestedRecordingFile = null
         updateUI()
+    }
+
+    private fun importPendingRecordingToAlbum() {
+        val sourceFile = pendingRecordingFile
+        val displayName = pendingRecordingDisplayName
+        if (sourceFile == null || displayName.isNullOrBlank()) {
+            showToast("录制已停止")
+            updateUI()
+            return
+        }
+
+        pendingRecordingFile = null
+        pendingRecordingDisplayName = null
+        showToast("录制已停止，正在保存到相册")
+        updateUI()
+
+        thread(name = "single-record-import") {
+            runCatching {
+                val actualSource = when {
+                    MediaStoreSaver.awaitFileReady(sourceFile) -> sourceFile
+                    requestedRecordingFile != null &&
+                        requestedRecordingFile != sourceFile &&
+                        MediaStoreSaver.awaitFileReady(requestedRecordingFile!!) -> requestedRecordingFile!!
+                    else -> throw IllegalStateException("源文件不存在或未完成写入: ${sourceFile.absolutePath}")
+                }
+                val savedMedia = MediaStoreSaver.saveToAlbum(
+                    context = this,
+                    sourceFile = actualSource,
+                    displayName = displayName,
+                    mimeType = "video/mp4",
+                    collection = MediaStoreSaver.Collection.VIDEO
+                )
+                if (actualSource.exists()) {
+                    actualSource.delete()
+                }
+                savedMedia
+            }.onSuccess { savedMedia ->
+                runOnUiThread {
+                    requestedRecordingFile = null
+                    lastRecordingPath = savedMedia.displayPath
+                    showToast("录制已保存到相册")
+                    updateUI()
+                }
+            }.onFailure { error ->
+                Log.e(TAG, "failed to import recording", error)
+                runOnUiThread {
+                    requestedRecordingFile = null
+                    lastRecordingPath = sourceFile.absolutePath
+                    showToast("保存到相册失败: ${error.message}")
+                    updateUI()
+                }
+            }
+        }
     }
 
     private fun updateUI() {
@@ -220,17 +299,19 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
             val currentPlayer = player
             val state = currentPlayer?.getState()
             val hasPlayer = currentPlayer != null && currentPlayer.isReleased() == false
-            val isPlaying = currentPlayer?.isPlaying() == true
+            val isPlaying = state?.isPlaying == true || currentPlayer?.isPlaying() == true
             val isRecording = currentPlayer?.isRecording() == true
             val streamId = currentPlayer?.getStreamId() ?: -1
+            val shouldShowPerformanceMonitor = hasPlayer && (isPlaying || isPerformanceMonitoring)
 
             btnPlay.isEnabled = !isPlaying
             btnStop.isEnabled = isPlaying
             btnRecord.isEnabled = isPlaying
+            btnDestroy.isEnabled = hasPlayer
             btnRecord.text = if (isRecording) "停止录制" else "开始录制"
 
-            performanceMonitorCard.visibility = if (isPlaying) View.VISIBLE else View.GONE
-            if (!isPlaying) {
+            performanceMonitorCard.visibility = if (shouldShowPerformanceMonitor) View.VISIBLE else View.GONE
+            if (!shouldShowPerformanceMonitor) {
                 isPerformanceMonitorExpanded = false
                 performanceMonitorContent.visibility = View.GONE
                 performanceMonitorToggle.text = "▼"
@@ -294,6 +375,7 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
         if (!isPerformanceMonitorExpanded) {
             togglePerformanceMonitor()
         }
+        updatePerformanceStats()
         performanceMonitorHandler.removeCallbacks(performanceMonitorRunnable)
         performanceMonitorHandler.post(performanceMonitorRunnable)
     }
@@ -351,6 +433,10 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
             statsBuilder.append('\n')
             statsBuilder.append("底层统计\n")
             statsBuilder.append(streamStats)
+        } else {
+            statsBuilder.append('\n')
+            statsBuilder.append("底层统计\n")
+            statsBuilder.append("暂无统计数据")
         }
 
         performanceMonitorTextView.text = statsBuilder.toString()

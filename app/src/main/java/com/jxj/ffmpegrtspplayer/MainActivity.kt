@@ -3,6 +3,8 @@ package com.jxj.ffmpegrtspplayer
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
+import com.jxj.ffmpegrtsp.lib.StreamPlayer
+
 class MainActivity : BaseInsetsActivity() {
 
     private lateinit var btnSinglePlayer: Button
@@ -17,6 +19,7 @@ class MainActivity : BaseInsetsActivity() {
 
         initViews()
         setupClickListeners()
+        StreamPlayer.setLogLevel(0)
     }
 
     private fun initViews() {

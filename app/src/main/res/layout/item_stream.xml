@@ -114,6 +114,14 @@
 
     </LinearLayout>
 
+    <Button
+        android:id="@+id/btn_destroy_stream"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="销毁流"
+        android:textSize="12sp" />
+
     <!-- 流状态信息 -->
     <TextView
         android:id="@+id/tv_stream_stats"
