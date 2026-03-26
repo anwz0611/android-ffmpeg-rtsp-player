@@ -102,7 +102,7 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
         performanceMonitorContent = findViewById(R.id.performanceMonitorContent)
         performanceMonitorTextView = findViewById(R.id.performanceMonitorTextView)
 
-        etRtspUrl.setText("http://demo-videos.qnsdk.com/VR-Panorama-Equirect-Angular-4500k.mp4")
+        etRtspUrl.setText("rtsp://192.168.144.130:554")
         surfaceView.holder.addCallback(this)
     }
 
