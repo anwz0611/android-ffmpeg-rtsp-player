@@ -19,7 +19,6 @@ class MainActivity : BaseInsetsActivity() {
 
         initViews()
         setupClickListeners()
-        StreamPlayer.setLogLevel(0)
     }
 
     private fun initViews() {

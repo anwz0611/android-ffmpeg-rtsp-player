@@ -100,11 +100,6 @@ class MultiPlayerActivity : BaseInsetsActivity() {
     private fun buildConfig(url: String): StreamConfig {
         return StreamConfig.Builder(url)
             .audioEnabled(true)
-            .enableDisconnectRecovery(true)
-            .disconnectRecoveryMaxAttempts(3)
-            .disconnectRecoveryIntervalMs(300)
-            .disconnectRecoveryNoPacketTimeoutMs(1500)
-            .disconnectRecoveryConnectTimeoutMs(3000)
             .build()
     }
 

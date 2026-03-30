@@ -259,11 +259,6 @@ class YUVTestActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
             StreamConfig.Builder(url)
                 .useSoftwareDecode(true)
                 .audioEnabled(false)
-                .enableDisconnectRecovery(true)
-                .disconnectRecoveryMaxAttempts(3)
-                .disconnectRecoveryIntervalMs(300)
-                .disconnectRecoveryNoPacketTimeoutMs(1500)
-                .disconnectRecoveryConnectTimeoutMs(3000)
                 .build()
         )
             .setOnStateChanged {
