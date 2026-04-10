@@ -11,8 +11,11 @@ import android.widget.EditText
 import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
+import com.jxj.ffmpegrtsp.lib.api.PlayerStateSnapshot
 import com.jxj.ffmpegrtsp.lib.api.StreamConfig
+import com.jxj.ffmpegrtsp.lib.api.StreamErrorCode
 import com.jxj.ffmpegrtsp.lib.api.StreamPlayer
+import com.jxj.ffmpegrtsp.lib.api.StreamStateCode
 import com.jxj.ffmpegrtsp.lib.yuv.IAsyncYUVProcessor
 import com.jxj.ffmpegrtsp.lib.yuv.IYUVFrameProcessor
 import com.jxj.ffmpegrtsp.lib.yuv.YUVFrameInfo
@@ -68,6 +71,8 @@ class YUVTestActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
     private lateinit var logScrollView: ScrollView
 
     private var player: StreamPlayer? = null
+    private var currentState: PlayerStateSnapshot = emptyState()
+    private var isStreamStarted = false
     private var isSurfaceReady = false
 
     private lateinit var observerProcessor: IYUVFrameProcessor
@@ -137,7 +142,7 @@ class YUVTestActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
 
     private fun setupListeners() {
         startStreamButton.setOnClickListener { ensurePlayerAndPlay() }
-        stopStreamButton.setOnClickListener { player?.stop() }
+        stopStreamButton.setOnClickListener { stopStream() }
         destroyStreamButton.setOnClickListener { releasePlayer() }
         registerObserverButton.setOnClickListener { registerObserver() }
         unregisterObserverButton.setOnClickListener { unregisterObserver() }
@@ -249,10 +254,13 @@ class YUVTestActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
 
         val currentPlayer = player
         if (currentPlayer != null && !currentPlayer.isReleased()) {
+            isStreamStarted = true
             currentPlayer.play()
+            refreshStateFromPlayer()
             return
         }
 
+        isStreamStarted = true
         player = StreamPlayer.playWithConfig(
             this,
             videoSurface,
@@ -262,29 +270,55 @@ class YUVTestActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
                 .build()
         )
             .setOnStateChanged {
-                updateUI()
+                syncState(it)
             }
             .setOnPlaybackStarted { videoInfo ->
+                isStreamStarted = true
+                refreshStateFromPlayer()
                 appendLog("播放开始: ${videoInfo.width}x${videoInfo.height} ${videoInfo.codec}")
                 updateUI()
             }
             .setOnPlaybackStopped {
+                isStreamStarted = false
+                refreshStateFromPlayer()
                 appendLog("播放已停止")
                 updateUI()
             }
             .setOnError { errorCode, errorMessage ->
+                refreshStateFromPlayer()
                 appendLog("播放器错误: $errorCode / $errorMessage")
                 updateUI()
             }
 
         appendLog("播放器已初始化，streamId=${player?.getStreamId()}")
+        refreshStateFromPlayer()
+    }
+
+    private fun stopStream() {
+        isStreamStarted = false
+        player?.stop()
+        refreshStateFromPlayer()
+    }
+
+    private fun syncState(state: PlayerStateSnapshot?) {
+        currentState = state ?: emptyState()
+        when {
+            currentState.isPlaying -> isStreamStarted = true
+            !currentState.isCreated || currentState.isReleased -> isStreamStarted = false
+        }
         updateUI()
+    }
+
+    private fun refreshStateFromPlayer() {
+        syncState(player?.getState())
     }
 
     private fun releasePlayer() {
         clearAllProcessors()
         player?.release()
         player = null
+        currentState = emptyState()
+        isStreamStarted = false
         resetStats()
         appendLog("播放器已释放")
         updateUI()
@@ -382,6 +416,7 @@ class YUVTestActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
     override fun surfaceCreated(holder: SurfaceHolder) {
         isSurfaceReady = true
         appendLog("Surface 已就绪")
+        refreshStateFromPlayer()
     }
 
     override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
@@ -391,15 +426,16 @@ class YUVTestActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
     override fun surfaceDestroyed(holder: SurfaceHolder) {
         isSurfaceReady = false
         appendLog("Surface 已销毁")
+        refreshStateFromPlayer()
     }
 
     override fun onResume() {
         super.onResume()
-        StreamPlayer.onAppForeground()
+        refreshStateFromPlayer()
     }
 
     override fun onPause() {
-        StreamPlayer.onAppBackground()
+        refreshStateFromPlayer()
         super.onPause()
     }
 
@@ -421,27 +457,31 @@ class YUVTestActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
         runOnUiThread {
             val currentPlayer = player
             val hasPlayer = currentPlayer != null && currentPlayer.isReleased() == false
-            val isPlaying = currentPlayer?.isPlaying() == true
+            val isPending = currentState.isOperationPending
+            val isPlaying = hasPlayer && (currentState.isPlaying || isStreamStarted)
+            val canOperatePlayer = hasPlayer && !isPending
 
-            startStreamButton.isEnabled = !isPlaying
-            stopStreamButton.isEnabled = isPlaying
+            startStreamButton.isEnabled = isSurfaceReady && !isPlaying && !isPending
+            stopStreamButton.isEnabled = hasPlayer && isPlaying && !isPending
+            destroyStreamButton.isEnabled = canOperatePlayer
 
-            registerObserverButton.isEnabled = hasPlayer && !isObserverRegistered
-            unregisterObserverButton.isEnabled = hasPlayer && isObserverRegistered
-            registerFilterButton.isEnabled = hasPlayer && !isFilterRegistered
-            unregisterFilterButton.isEnabled = hasPlayer && isFilterRegistered
-            registerCustomButton.isEnabled = hasPlayer && !isCustomRegistered
-            unregisterCustomButton.isEnabled = hasPlayer && isCustomRegistered
-            registerAsyncButton.isEnabled = hasPlayer && !isAsyncRegistered
-            unregisterAsyncButton.isEnabled = hasPlayer && isAsyncRegistered
-            enableRenderButton.isEnabled = hasPlayer
-            disableRenderButton.isEnabled = hasPlayer
-            clearProcessorsButton.isEnabled = hasPlayer
+            registerObserverButton.isEnabled = canOperatePlayer && !isObserverRegistered
+            unregisterObserverButton.isEnabled = canOperatePlayer && isObserverRegistered
+            registerFilterButton.isEnabled = canOperatePlayer && !isFilterRegistered
+            unregisterFilterButton.isEnabled = canOperatePlayer && isFilterRegistered
+            registerCustomButton.isEnabled = canOperatePlayer && !isCustomRegistered
+            unregisterCustomButton.isEnabled = canOperatePlayer && isCustomRegistered
+            registerAsyncButton.isEnabled = canOperatePlayer && !isAsyncRegistered
+            unregisterAsyncButton.isEnabled = canOperatePlayer && isAsyncRegistered
+            enableRenderButton.isEnabled = canOperatePlayer
+            disableRenderButton.isEnabled = canOperatePlayer
+            clearProcessorsButton.isEnabled = canOperatePlayer
 
             val status = when {
                 !hasPlayer -> "状态: 未开始播放"
+                isPending -> "状态: 操作进行中"
                 isPlaying -> "状态: 播放中"
-                else -> "状态: 待播放"
+                else -> "状态: 已停止"
             }
             val renderEnabled = currentPlayer?.isBuiltinRenderEnabled() == true
             statusTextView.text = "$status | 内置渲染: ${if (renderEnabled) "开启" else "关闭"}"
@@ -545,5 +585,23 @@ class YUVTestActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
 
     private fun showToast(message: String) {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+    }
+
+    private fun emptyState(): PlayerStateSnapshot {
+        return PlayerStateSnapshot(
+            -1,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            StreamStateCode.IDLE,
+            StreamErrorCode.OK,
+            null,
+            null,
+            null,
+            1.0f
+        )
     }
 }

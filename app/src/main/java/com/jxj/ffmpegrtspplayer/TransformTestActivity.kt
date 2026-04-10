@@ -9,8 +9,11 @@ import android.widget.EditText
 import android.widget.SeekBar
 import android.widget.TextView
 import android.widget.Toast
+import com.jxj.ffmpegrtsp.lib.api.PlayerStateSnapshot
 import com.jxj.ffmpegrtsp.lib.api.StreamConfig
+import com.jxj.ffmpegrtsp.lib.api.StreamErrorCode
 import com.jxj.ffmpegrtsp.lib.api.StreamPlayer
+import com.jxj.ffmpegrtsp.lib.api.StreamStateCode
 import com.jxj.ffmpegrtsp.lib.transform.VideoTransformManager
 import java.util.Locale
 
@@ -46,6 +49,8 @@ class TransformTestActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
     private lateinit var zoomValueTextView: TextView
 
     private var player: StreamPlayer? = null
+    private var currentState: PlayerStateSnapshot = emptyState()
+    private var isStreamStarted = false
     private var currentRotation = 0
     private var isMirrored = false
     private var isFlipped = false
@@ -93,7 +98,7 @@ class TransformTestActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
 
     private fun setupListeners() {
         startStreamButton.setOnClickListener { ensurePlayerAndPlay() }
-        stopStreamButton.setOnClickListener { player?.stop() }
+        stopStreamButton.setOnClickListener { stopStream() }
         destroyStreamButton.setOnClickListener { releasePlayer() }
         rotateButton.setOnClickListener { rotateNext() }
         mirrorButton.setOnClickListener { toggleMirror() }
@@ -140,10 +145,13 @@ class TransformTestActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
 
         val currentPlayer = player
         if (currentPlayer != null && !currentPlayer.isReleased()) {
+            isStreamStarted = true
             currentPlayer.play()
+            refreshStateFromPlayer()
             return
         }
 
+        isStreamStarted = true
         player = StreamPlayer.playWithConfig(
             this,
             videoSurface,
@@ -153,29 +161,55 @@ class TransformTestActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
                 .build()
         )
             .setOnStateChanged {
-                updateUI()
+                syncState(it)
             }
             .setOnPlaybackStarted {
+                isStreamStarted = true
+                refreshStateFromPlayer()
                 Log.i(TAG, "播放开始，streamId=${player?.getStreamId()}")
                 updateUI()
             }
             .setOnPlaybackStopped {
+                isStreamStarted = false
+                refreshStateFromPlayer()
                 Log.i(TAG, "播放停止")
                 updateUI()
             }
             .setOnError { errorCode, errorMessage ->
+                refreshStateFromPlayer()
                 Log.e(TAG, "播放器错误: $errorCode / $errorMessage")
                 showToast("播放器错误: $errorMessage")
                 updateUI()
             }
 
         resetTransformState()
+        refreshStateFromPlayer()
+    }
+
+    private fun stopStream() {
+        isStreamStarted = false
+        player?.stop()
+        refreshStateFromPlayer()
+    }
+
+    private fun syncState(state: PlayerStateSnapshot?) {
+        currentState = state ?: emptyState()
+        when {
+            currentState.isPlaying -> isStreamStarted = true
+            !currentState.isCreated || currentState.isReleased -> isStreamStarted = false
+        }
         updateUI()
+    }
+
+    private fun refreshStateFromPlayer() {
+        syncState(player?.getState())
     }
 
     private fun releasePlayer() {
         player?.release()
         player = null
+        currentState = emptyState()
+        isStreamStarted = false
         resetTransformState()
         updateUI()
     }
@@ -247,14 +281,14 @@ class TransformTestActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
 
     private fun currentStreamId(): Int? {
         val currentPlayer = player ?: return null
-        if (!currentPlayer.isCreated() || currentPlayer.isReleased()) {
+        if (currentPlayer.isReleased()) {
             return null
         }
         return currentPlayer.getStreamId()
     }
 
     override fun surfaceCreated(holder: SurfaceHolder) {
-        updateUI()
+        refreshStateFromPlayer()
     }
 
     override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
@@ -263,15 +297,16 @@ class TransformTestActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
 
     override fun surfaceDestroyed(holder: SurfaceHolder) {
         Log.d(TAG, "surface destroyed")
+        refreshStateFromPlayer()
     }
 
     override fun onResume() {
         super.onResume()
-        StreamPlayer.onAppForeground()
+        refreshStateFromPlayer()
     }
 
     override fun onPause() {
-        StreamPlayer.onAppBackground()
+        refreshStateFromPlayer()
         super.onPause()
     }
 
@@ -284,16 +319,27 @@ class TransformTestActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
         runOnUiThread {
             val currentPlayer = player
             val hasPlayer = currentPlayer != null && currentPlayer.isReleased() == false
-            val isPlaying = currentPlayer?.isPlaying() == true
+            val isPending = currentState.isOperationPending
+            val isPlaying = hasPlayer && (currentState.isPlaying || isStreamStarted)
+            val enableTransformControls = hasPlayer && !isPending
 
-            startStreamButton.isEnabled = !isPlaying
-            stopStreamButton.isEnabled = isPlaying
-            destroyStreamButton.isEnabled = hasPlayer
+            startStreamButton.isEnabled = !isPlaying && !isPending
+            stopStreamButton.isEnabled = hasPlayer && isPlaying && !isPending
+            destroyStreamButton.isEnabled = hasPlayer && !isPending
+            rotateButton.isEnabled = enableTransformControls
+            mirrorButton.isEnabled = enableTransformControls
+            flipButton.isEnabled = enableTransformControls
+            zoomInButton.isEnabled = enableTransformControls
+            zoomOutButton.isEnabled = enableTransformControls
+            resetTransformButton.isEnabled = enableTransformControls
+            zoomCenterXSeekBar.isEnabled = enableTransformControls
+            zoomCenterYSeekBar.isEnabled = enableTransformControls
 
             val status = when {
                 !hasPlayer -> "状态: 未开始播放"
+                isPending -> "状态: 操作进行中"
                 isPlaying -> "状态: 播放中"
-                else -> "状态: 待播放"
+                else -> "状态: 已停止"
             }
             statusTextView.text = status
             updateTransformStatus()
@@ -359,5 +405,23 @@ class TransformTestActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
 
     private fun showToast(message: String) {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+    }
+
+    private fun emptyState(): PlayerStateSnapshot {
+        return PlayerStateSnapshot(
+            -1,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            StreamStateCode.IDLE,
+            StreamErrorCode.OK,
+            null,
+            null,
+            null,
+            1.0f
+        )
     }
 }

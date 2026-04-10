@@ -14,7 +14,9 @@ import android.widget.Toast
 import androidx.cardview.widget.CardView
 import com.jxj.ffmpegrtsp.lib.api.PlayerStateSnapshot
 import com.jxj.ffmpegrtsp.lib.api.StreamConfig
+import com.jxj.ffmpegrtsp.lib.api.StreamErrorCode
 import com.jxj.ffmpegrtsp.lib.api.StreamPlayer
+import com.jxj.ffmpegrtsp.lib.api.StreamStateCode
 import com.jxj.ffmpegrtsp.lib.api.VideoInfo
 import java.io.File
 import java.text.SimpleDateFormat
@@ -54,11 +56,13 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
     private lateinit var performanceMonitorTextView: TextView
 
     private var player: StreamPlayer? = null
+    private var currentState: PlayerStateSnapshot = emptyState()
     private var currentVideoInfo: VideoInfo? = null
     private var lastRecordingPath: String? = null
     private var pendingRecordingFile: File? = null
     private var pendingRecordingDisplayName: String? = null
     private var requestedRecordingFile: File? = null
+    private var isPlaybackRequested = false
     private var isPerformanceMonitorExpanded = false
     private var isPerformanceMonitoring = false
     private var monitoringStartTime = 0L
@@ -123,7 +127,9 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
 
         val currentPlayer = player
         if (currentPlayer != null && !currentPlayer.isReleased()) {
+            isPlaybackRequested = true
             currentPlayer.play()
+            refreshStateFromPlayer()
             return
         }
 
@@ -131,6 +137,7 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
             .useSoftwareDecode(true)
             .build()
 
+        isPlaybackRequested = true
         player = StreamPlayer.playWithConfig(this, surfaceView, config)
             .setOnStateChanged { state ->
                 Log.i(TAG, "state=${state.streamStateCode}")
@@ -138,7 +145,9 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
             }
             .setOnPlaybackStarted { videoInfo ->
                 runOnUiThread {
+                    isPlaybackRequested = true
                     currentVideoInfo = videoInfo
+                    refreshStateFromPlayer()
                     Log.i(TAG, "playback started: $videoInfo")
                     showToast("播放已开始")
                     startPerformanceMonitoring()
@@ -147,6 +156,8 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
             }
             .setOnPlaybackStopped {
                 runOnUiThread {
+                    isPlaybackRequested = false
+                    refreshStateFromPlayer()
                     Log.i(TAG, "playback stopped")
                     stopPerformanceMonitoring()
                     updateUI()
@@ -167,31 +178,33 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
             }
             .setOnError { errorCode, errorMessage ->
                 runOnUiThread {
+                    refreshStateFromPlayer()
                     Log.e(TAG, "player error: code=$errorCode, message=$errorMessage")
                     showToast("播放器错误: $errorMessage")
                     updateUI()
                 }
             }
 
-        syncState(player?.getState())
+        refreshStateFromPlayer()
         showToast("播放器已创建并开始播放")
     }
 
     private fun stopPlayer() {
+        isPlaybackRequested = false
         player?.stop()
         stopPerformanceMonitoring()
-        updateUI()
+        refreshStateFromPlayer()
     }
 
     private fun toggleRecording() {
         val currentPlayer = player
-        if (currentPlayer == null || !currentPlayer.isPlaying()) {
-            showToast("请先开始播放")
+        if (currentPlayer?.isRecording() == true) {
+            currentPlayer.stopRecording()
             return
         }
 
-        if (currentPlayer.isRecording()) {
-            currentPlayer.stopRecording()
+        if (currentPlayer == null || !isPlayerEffectivelyPlaying(currentPlayer)) {
+            showToast("请先开始播放")
             return
         }
 
@@ -215,24 +228,44 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
     }
 
     private fun syncState(state: PlayerStateSnapshot?) {
-        if (state == null) {
-            updateUI()
-            return
+        currentState = state ?: emptyState()
+        currentVideoInfo = currentState.lastVideoInfo ?: currentVideoInfo
+
+        when {
+            currentState.isPlaying -> isPlaybackRequested = true
+            !currentState.isCreated || currentState.isReleased -> isPlaybackRequested = false
         }
 
-        currentVideoInfo = state.lastVideoInfo ?: currentVideoInfo
-
-        if (!state.isPlaying) {
+        if (!currentState.isPlaying && !isPlaybackRequested) {
             stopPerformanceMonitoring()
         }
 
         updateUI()
     }
 
+    private fun refreshStateFromPlayer() {
+        syncState(player?.getState())
+    }
+
+    private fun isPlayerEffectivelyPlaying(
+        currentPlayer: StreamPlayer? = player,
+        state: PlayerStateSnapshot = currentState
+    ): Boolean {
+        if (currentPlayer == null || currentPlayer.isReleased()) {
+            return false
+        }
+        return state.isPlaying ||
+            currentPlayer.isPlaying() ||
+            currentPlayer.isRecording() ||
+            isPlaybackRequested
+    }
+
     private fun releasePlayer() {
         stopPerformanceMonitoring()
         player?.release()
         player = null
+        currentState = emptyState()
+        isPlaybackRequested = false
         currentVideoInfo = null
         lastRecordingPath = null
         pendingRecordingFile = null
@@ -297,17 +330,18 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
     private fun updateUI() {
         runOnUiThread {
             val currentPlayer = player
-            val state = currentPlayer?.getState()
+            val state = currentState
             val hasPlayer = currentPlayer != null && currentPlayer.isReleased() == false
-            val isPlaying = state?.isPlaying == true || currentPlayer?.isPlaying() == true
-            val isRecording = currentPlayer?.isRecording() == true
-            val streamId = currentPlayer?.getStreamId() ?: -1
+            val isPending = state.isOperationPending
+            val isPlaying = isPlayerEffectivelyPlaying(currentPlayer, state)
+            val isRecording = state.isRecording || currentPlayer?.isRecording() == true
+            val streamId = if (hasPlayer) state.streamId else -1
             val shouldShowPerformanceMonitor = hasPlayer && (isPlaying || isPerformanceMonitoring)
 
-            btnPlay.isEnabled = !isPlaying
-            btnStop.isEnabled = isPlaying
-            btnRecord.isEnabled = isPlaying
-            btnDestroy.isEnabled = hasPlayer
+            btnPlay.isEnabled = !isPlaying && !isPending
+            btnStop.isEnabled = hasPlayer && isPlaying && !isPending
+            btnRecord.isEnabled = (isPlaying || isRecording) && !isPending
+            btnDestroy.isEnabled = hasPlayer && !isPending
             btnRecord.text = if (isRecording) "停止录制" else "开始录制"
 
             performanceMonitorCard.visibility = if (shouldShowPerformanceMonitor) View.VISIBLE else View.GONE
@@ -319,9 +353,10 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
 
             val statusText = when {
                 !hasPlayer -> "状态: 未开始播放"
+                isPending -> "状态: 操作进行中"
                 isRecording -> "状态: 播放中，录制中"
                 isPlaying -> "状态: 播放中"
-                else -> "状态: 待播放"
+                else -> "状态: 已停止"
             }
             tvStatus.text = statusText
 
@@ -329,9 +364,10 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
             if (streamId >= 0) {
                 infoBuilder.append(" | 流ID: ").append(streamId)
             }
-            state?.currentUrl?.takeIf { it.isNotBlank() }?.let {
+            state.currentUrl?.takeIf { it.isNotBlank() }?.let {
                 infoBuilder.append(" | URL: ").append(it)
             }
+            infoBuilder.append(" | 状态码: ").append(state.streamStateCode)
             currentVideoInfo?.let {
                 infoBuilder.append(" | ").append(it.width).append("x").append(it.height)
                 infoBuilder.append(" @ ").append(it.fps).append("fps")
@@ -348,7 +384,7 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
     }
 
     override fun surfaceCreated(holder: SurfaceHolder) {
-        updateUI()
+        refreshStateFromPlayer()
     }
 
     override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
@@ -357,6 +393,7 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
 
     override fun surfaceDestroyed(holder: SurfaceHolder) {
         Log.d(TAG, "surface destroyed")
+        refreshStateFromPlayer()
     }
 
     private fun togglePerformanceMonitor() {
@@ -465,14 +502,14 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
 
     override fun onResume() {
         super.onResume()
-        StreamPlayer.onAppForeground()
-        if (player?.isPlaying() == true) {
+        refreshStateFromPlayer()
+        if (isPlayerEffectivelyPlaying()) {
             startPerformanceMonitoring()
         }
     }
 
     override fun onPause() {
-        StreamPlayer.onAppBackground()
+        refreshStateFromPlayer()
         super.onPause()
     }
 
@@ -480,5 +517,23 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
         performanceMonitorHandler.removeCallbacks(performanceMonitorRunnable)
         releasePlayer()
         super.onDestroy()
+    }
+
+    private fun emptyState(): PlayerStateSnapshot {
+        return PlayerStateSnapshot(
+            -1,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            StreamStateCode.IDLE,
+            StreamErrorCode.OK,
+            null,
+            null,
+            null,
+            1.0f
+        )
     }
 }
