@@ -11,8 +11,8 @@ import android.widget.EditText
 import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
-import com.jxj.ffmpegrtsp.lib.StreamConfig
-import com.jxj.ffmpegrtsp.lib.StreamPlayer
+import com.jxj.ffmpegrtsp.lib.api.StreamConfig
+import com.jxj.ffmpegrtsp.lib.api.StreamPlayer
 import com.jxj.ffmpegrtsp.lib.yuv.IAsyncYUVProcessor
 import com.jxj.ffmpegrtsp.lib.yuv.IYUVFrameProcessor
 import com.jxj.ffmpegrtsp.lib.yuv.YUVFrameInfo

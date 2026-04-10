@@ -11,8 +11,8 @@ import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
-import com.jxj.ffmpegrtsp.lib.StreamConfig
-import com.jxj.ffmpegrtsp.lib.StreamPlayer
+import com.jxj.ffmpegrtsp.lib.api.StreamConfig
+import com.jxj.ffmpegrtsp.lib.api.StreamPlayer
 import com.jxj.ffmpegrtsp.lib.capture.FrameCaptureRequest
 import com.jxj.ffmpegrtsp.lib.capture.FrameCaptureResult
 import java.io.File

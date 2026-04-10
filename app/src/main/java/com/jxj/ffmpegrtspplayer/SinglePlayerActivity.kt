@@ -12,10 +12,10 @@ import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.cardview.widget.CardView
-import com.jxj.ffmpegrtsp.lib.PlayerStateSnapshot
-import com.jxj.ffmpegrtsp.lib.StreamConfig
-import com.jxj.ffmpegrtsp.lib.StreamPlayer
-import com.jxj.ffmpegrtsp.lib.VideoInfo
+import com.jxj.ffmpegrtsp.lib.api.PlayerStateSnapshot
+import com.jxj.ffmpegrtsp.lib.api.StreamConfig
+import com.jxj.ffmpegrtsp.lib.api.StreamPlayer
+import com.jxj.ffmpegrtsp.lib.api.VideoInfo
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
