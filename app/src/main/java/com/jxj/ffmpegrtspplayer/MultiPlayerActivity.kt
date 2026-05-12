@@ -61,6 +61,7 @@ class MultiPlayerActivity : BaseInsetsActivity() {
         btnPlayAll.setOnClickListener { streamItems.forEach { it.play() } }
         btnStopAll.setOnClickListener { streamItems.forEach { it.stop() } }
         btnClearAll.setOnClickListener { clearAllStreams() }
+        updateTopControls()
     }
 
     private fun addStream() {
@@ -95,6 +96,17 @@ class MultiPlayerActivity : BaseInsetsActivity() {
     private fun updateStreamCount() {
         val createdCount = streamItems.count { it.player?.isCreated() == true && it.player?.isReleased() == false }
         tvStreamCount.text = "活跃播放器: $createdCount / ${streamItems.size}"
+        updateTopControls()
+    }
+
+    private fun updateTopControls() {
+        val hasStreams = streamItems.isNotEmpty()
+        val anyStreamPlaying = streamItems.any { it.isPlaying() }
+        val anyStreamReadyToStart = streamItems.any { it.canStart() }
+
+        btnPlayAll.isEnabled = hasStreams && anyStreamReadyToStart
+        btnStopAll.isEnabled = hasStreams && anyStreamPlaying
+        btnClearAll.isEnabled = hasStreams
     }
 
     private fun buildConfig(url: String): StreamConfig {
@@ -342,14 +354,15 @@ class MultiPlayerActivity : BaseInsetsActivity() {
             val currentPlayer = player
             val state = currentPlayer?.getState()
             val hasPlayer = currentPlayer != null && currentPlayer.isReleased() == false
-            val isPlaying = currentPlayer?.isPlaying() == true
-            val isRecording = currentPlayer?.isRecording() == true
+            val isPending = state?.isOperationPending == true
+            val isPlaying = state?.isPlaying == true || currentPlayer?.isPlaying() == true
+            val isRecording = state?.isRecording == true || currentPlayer?.isRecording() == true
 
-            btnPlayStream?.isEnabled = !isPlaying
-            btnStopStream?.isEnabled = isPlaying
-            btnRecordStream?.isEnabled = isPlaying
-            btnTakePhoto?.isEnabled = isPlaying
-            btnDestroyStream?.isEnabled = hasPlayer
+            btnPlayStream?.isEnabled = !isPending && (!hasPlayer || !isPlaying)
+            btnStopStream?.isEnabled = hasPlayer && isPlaying && !isPending
+            btnRecordStream?.isEnabled = hasPlayer && (isPlaying || isRecording) && !isPending
+            btnTakePhoto?.isEnabled = hasPlayer && (isPlaying || isRecording) && !isPending
+            btnDestroyStream?.isEnabled = hasPlayer && !isPending
             btnRecordStream?.text = if (isRecording) "停止录制" else "录制"
 
             if (!hasPlayer) {
@@ -380,6 +393,32 @@ class MultiPlayerActivity : BaseInsetsActivity() {
                 }
             }
             updateStats(stats)
+            updateTopControls()
+        }
+
+        fun canStart(): Boolean {
+            val currentPlayer = player ?: return true
+            if (currentPlayer.isReleased()) {
+                return true
+            }
+            val state = currentPlayer.getState()
+            return state?.isOperationPending != true &&
+                state?.isPlaying != true &&
+                state?.isRecording != true &&
+                !currentPlayer.isPlaying() &&
+                !currentPlayer.isRecording()
+        }
+
+        fun isPlaying(): Boolean {
+            val currentPlayer = player ?: return false
+            if (currentPlayer.isReleased()) {
+                return false
+            }
+            val state = currentPlayer.getState()
+            return state?.isPlaying == true ||
+                state?.isRecording == true ||
+                currentPlayer.isPlaying() ||
+                currentPlayer.isRecording()
         }
 
         private fun updateStatus(status: String) {

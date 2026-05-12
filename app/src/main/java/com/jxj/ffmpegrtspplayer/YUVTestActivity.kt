@@ -285,6 +285,7 @@ class YUVTestActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
                 updateUI()
             }
             .setOnError { errorCode, errorMessage ->
+                isStreamStarted = false
                 refreshStateFromPlayer()
                 appendLog("播放器错误: $errorCode / $errorMessage")
                 updateUI()
@@ -459,6 +460,7 @@ class YUVTestActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
             val hasPlayer = currentPlayer != null && currentPlayer.isReleased() == false
             val isPending = currentState.isOperationPending
             val isPlaying = hasPlayer && (currentState.isPlaying || isStreamStarted)
+            val renderEnabled = currentPlayer?.isBuiltinRenderEnabled() == true
             val canOperatePlayer = hasPlayer && !isPending
 
             startStreamButton.isEnabled = isSurfaceReady && !isPlaying && !isPending
@@ -473,8 +475,8 @@ class YUVTestActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
             unregisterCustomButton.isEnabled = canOperatePlayer && isCustomRegistered
             registerAsyncButton.isEnabled = canOperatePlayer && !isAsyncRegistered
             unregisterAsyncButton.isEnabled = canOperatePlayer && isAsyncRegistered
-            enableRenderButton.isEnabled = canOperatePlayer
-            disableRenderButton.isEnabled = canOperatePlayer
+            enableRenderButton.isEnabled = canOperatePlayer && !renderEnabled
+            disableRenderButton.isEnabled = canOperatePlayer && renderEnabled
             clearProcessorsButton.isEnabled = canOperatePlayer
 
             val status = when {
@@ -483,7 +485,6 @@ class YUVTestActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
                 isPlaying -> "状态: 播放中"
                 else -> "状态: 已停止"
             }
-            val renderEnabled = currentPlayer?.isBuiltinRenderEnabled() == true
             statusTextView.text = "$status | 内置渲染: ${if (renderEnabled) "开启" else "关闭"}"
 
             val activeProcessors = mutableListOf<String>()

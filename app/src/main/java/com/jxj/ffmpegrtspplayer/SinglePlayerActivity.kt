@@ -178,6 +178,7 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
             }
             .setOnError { errorCode, errorMessage ->
                 runOnUiThread {
+                    isPlaybackRequested = false
                     refreshStateFromPlayer()
                     Log.e(TAG, "player error: code=$errorCode, message=$errorMessage")
                     showToast("播放器错误: $errorMessage")

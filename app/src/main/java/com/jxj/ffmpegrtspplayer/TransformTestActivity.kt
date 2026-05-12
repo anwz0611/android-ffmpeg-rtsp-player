@@ -176,6 +176,7 @@ class TransformTestActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
                 updateUI()
             }
             .setOnError { errorCode, errorMessage ->
+                isStreamStarted = false
                 refreshStateFromPlayer()
                 Log.e(TAG, "播放器错误: $errorCode / $errorMessage")
                 showToast("播放器错误: $errorMessage")
