@@ -422,6 +422,7 @@ class TransformTestActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
             null,
             null,
             null,
+            null,
             1.0f
         )
     }

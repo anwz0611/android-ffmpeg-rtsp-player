@@ -275,7 +275,10 @@ class YUVTestActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
             .setOnPlaybackStarted { videoInfo ->
                 isStreamStarted = true
                 refreshStateFromPlayer()
-                appendLog("播放开始: ${videoInfo.width}x${videoInfo.height} ${videoInfo.codec}")
+                val playbackInfo = videoInfo?.let {
+                    "${it.width}x${it.height} ${it.codec}"
+                } ?: "视频信息暂不可用"
+                appendLog("播放开始: $playbackInfo")
                 updateUI()
             }
             .setOnPlaybackStopped {
@@ -599,6 +602,7 @@ class YUVTestActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
             false,
             StreamStateCode.IDLE,
             StreamErrorCode.OK,
+            null,
             null,
             null,
             null,
