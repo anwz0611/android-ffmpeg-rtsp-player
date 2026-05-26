@@ -4,11 +4,12 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import android.widget.EditText
+import android.widget.RadioGroup
 import android.view.SurfaceHolder
 import android.view.SurfaceView
 import android.view.View
 import android.widget.Button
-import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.cardview.widget.CardView
@@ -18,6 +19,7 @@ import com.jxj.ffmpegrtsp.lib.api.StreamErrorCode
 import com.jxj.ffmpegrtsp.lib.api.StreamPlayer
 import com.jxj.ffmpegrtsp.lib.api.StreamStateCode
 import com.jxj.ffmpegrtsp.lib.api.VideoInfo
+import com.google.android.material.switchmaterial.SwitchMaterial
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -48,6 +50,21 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
     private lateinit var tvStatus: TextView
     private lateinit var tvStreamInfo: TextView
     private lateinit var tvRecordInfo: TextView
+    private lateinit var switchSoftwareDecode: SwitchMaterial
+    private lateinit var switchAudioEnabled: SwitchMaterial
+    private lateinit var switchFastSeek: SwitchMaterial
+    private lateinit var switchRecoveryEnabled: SwitchMaterial
+    private lateinit var rgTransportProtocol: RadioGroup
+    private lateinit var rgRendererType: RadioGroup
+    private lateinit var rgLatencyMode: RadioGroup
+    private lateinit var rgClockPolicy: RadioGroup
+    private lateinit var etBufferSize: EditText
+    private lateinit var etTimeout: EditText
+    private lateinit var etAudioInitBufferMs: EditText
+    private lateinit var etRecoveryMaxAttempts: EditText
+    private lateinit var etRecoveryIntervalMs: EditText
+    private lateinit var etRecoveryNoPacketTimeoutMs: EditText
+    private lateinit var etRecoveryConnectTimeoutMs: EditText
 
     private lateinit var performanceMonitorCard: CardView
     private lateinit var performanceMonitorHeader: View
@@ -99,6 +116,21 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
         tvStatus = findViewById(R.id.tv_status)
         tvStreamInfo = findViewById(R.id.tv_stream_info)
         tvRecordInfo = findViewById(R.id.tv_record_info)
+        switchSoftwareDecode = findViewById(R.id.switch_software_decode)
+        switchAudioEnabled = findViewById(R.id.switch_audio_enabled)
+        switchFastSeek = findViewById(R.id.switch_fast_seek)
+        switchRecoveryEnabled = findViewById(R.id.switch_recovery_enabled)
+        rgTransportProtocol = findViewById(R.id.rg_transport_protocol)
+        rgRendererType = findViewById(R.id.rg_renderer_type)
+        rgLatencyMode = findViewById(R.id.rg_latency_mode)
+        rgClockPolicy = findViewById(R.id.rg_clock_policy)
+        etBufferSize = findViewById(R.id.et_buffer_size)
+        etTimeout = findViewById(R.id.et_timeout)
+        etAudioInitBufferMs = findViewById(R.id.et_audio_init_buffer_ms)
+        etRecoveryMaxAttempts = findViewById(R.id.et_recovery_max_attempts)
+        etRecoveryIntervalMs = findViewById(R.id.et_recovery_interval_ms)
+        etRecoveryNoPacketTimeoutMs = findViewById(R.id.et_recovery_no_packet_timeout_ms)
+        etRecoveryConnectTimeoutMs = findViewById(R.id.et_recovery_connect_timeout_ms)
 
         performanceMonitorCard = findViewById(R.id.performanceMonitorCard)
         performanceMonitorHeader = findViewById(R.id.performanceMonitorHeader)
@@ -133,9 +165,7 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
             return
         }
 
-        val config = StreamConfig.Builder(url)
-            .useSoftwareDecode(true)
-            .build()
+        val config = buildStreamConfig(url)
 
         isPlaybackRequested = true
         player = StreamPlayer.playWithConfig(this, surfaceView, config)
@@ -188,6 +218,75 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
 
         refreshStateFromPlayer()
         showToast("播放器已创建并开始播放")
+    }
+
+    private fun buildStreamConfig(url: String): StreamConfig {
+        return StreamConfig.Builder(url)
+            .useSoftwareDecode(switchSoftwareDecode.isChecked)
+            .audioEnabled(switchAudioEnabled.isChecked)
+            .rtspTransport(selectedTransportProtocol())
+            .bufferSize(parseInt(etBufferSize, defaultValue = 4096))
+            .timeout(parseInt(etTimeout, defaultValue = 10_000))
+            .enableFastSeek(switchFastSeek.isChecked)
+            .rendererType(selectedRendererType())
+            .latencyMode(selectedLatencyMode())
+            .clockPolicy(selectedClockPolicy())
+            .audioInitBufferMs(parseInt(etAudioInitBufferMs, defaultValue = 200))
+            .recoveryEnabled(switchRecoveryEnabled.isChecked)
+            .recoveryMaxAttempts(parseInt(etRecoveryMaxAttempts, defaultValue = 3))
+            .recoveryIntervalMs(parseInt(etRecoveryIntervalMs, defaultValue = 300))
+            .recoveryNoPacketTimeoutMs(parseInt(etRecoveryNoPacketTimeoutMs, defaultValue = 1500))
+            .recoveryConnectTimeoutMs(parseInt(etRecoveryConnectTimeoutMs, defaultValue = 3000))
+            .build()
+    }
+
+    private fun selectedTransportProtocol(): StreamConfig.TransportProtocol {
+        return when (rgTransportProtocol.checkedRadioButtonId) {
+            R.id.rb_transport_tcp -> StreamConfig.TransportProtocol.TCP
+            R.id.rb_transport_udp -> StreamConfig.TransportProtocol.UDP
+            R.id.rb_transport_multicast -> StreamConfig.TransportProtocol.MULTICAST
+            else -> StreamConfig.TransportProtocol.AUTO
+        }
+    }
+
+    private fun selectedRendererType(): StreamConfig.RendererType {
+        return when (rgRendererType.checkedRadioButtonId) {
+            R.id.rb_renderer_software -> StreamConfig.RendererType.SOFTWARE
+            R.id.rb_renderer_opengl -> StreamConfig.RendererType.OPENGL
+            else -> StreamConfig.RendererType.AUTO
+        }
+    }
+
+    private fun selectedLatencyMode(): StreamConfig.LatencyMode {
+        return when (rgLatencyMode.checkedRadioButtonId) {
+            R.id.rb_latency_balanced -> StreamConfig.LatencyMode.BALANCED
+            else -> StreamConfig.LatencyMode.ULTRA_LOW_LATENCY
+        }
+    }
+
+    private fun selectedClockPolicy(): StreamConfig.ClockPolicy {
+        return when (rgClockPolicy.checkedRadioButtonId) {
+            R.id.rb_clock_audio_master -> StreamConfig.ClockPolicy.AUDIO_MASTER
+            R.id.rb_clock_video_master -> StreamConfig.ClockPolicy.VIDEO_MASTER
+            else -> StreamConfig.ClockPolicy.AUTO
+        }
+    }
+
+    private fun parseInt(editText: EditText, defaultValue: Int): Int {
+        val rawValue = editText.text.toString().trim()
+        if (rawValue.isEmpty()) {
+            editText.setText(defaultValue.toString())
+            return defaultValue
+        }
+        return rawValue.toIntOrNull()?.also {
+            if (it < 0) {
+                editText.setText(defaultValue.toString())
+            }
+        }?.takeIf { it >= 0 } ?: run {
+            editText.setText(defaultValue.toString())
+            showToast("${editText.hint} 无效，已恢复默认值 $defaultValue")
+            defaultValue
+        }
     }
 
     private fun stopPlayer() {
@@ -450,7 +549,7 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
         statsBuilder.append("录制中: ").append(snapshot.isRecording).append('\n')
         statsBuilder.append("待处理操作: ").append(snapshot.isOperationPending).append('\n')
 
-        if (snapshot.lastErrorCode != null || !snapshot.lastErrorMessage.isNullOrBlank()) {
+        if (snapshot.lastErrorCode != StreamErrorCode.OK || !snapshot.lastErrorMessage.isNullOrBlank()) {
             statsBuilder.append("最近错误: ")
                 .append(snapshot.lastErrorCode)
                 .append(" / ")

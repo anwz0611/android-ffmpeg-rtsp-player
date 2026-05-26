@@ -3,198 +3,667 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="#F5F7FA"
     android:clipToPadding="false"
     android:fillViewport="true">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:padding="12dp">
 
-        <!-- 顶部输入栏 -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:padding="8dp"
-            android:background="#f0f0f0">
-
-            <EditText
-                android:id="@+id/et_rtsp_url"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="输入RTSP地址"
-                android:text="rtsp://stream.strba.sk:1935/strba/VYHLAD_JAZERO.stream"
-                android:padding="8dp" />
-
-        </LinearLayout>
-
-        <!-- 视频显示区域 -->
-        <FrameLayout
-            android:layout_width="match_parent"
-            android:layout_height="300dp"
-            android:background="#000000">
-
-            <SurfaceView
-                android:id="@+id/surface_view"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent" />
+            android:background="#FFFFFF"
+            android:orientation="vertical"
+            android:padding="16dp">
 
             <TextView
-                android:id="@+id/tv_status"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:text="待播放"
-                android:textColor="#ffffff"
-                android:textSize="16sp" />
+                android:text="播放源"
+                android:textColor="#101828"
+                android:textSize="18sp"
+                android:textStyle="bold" />
 
-        </FrameLayout>
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="RTSP 地址必填。先填地址、直接看画面，下面再按需调整高级配置。"
+                android:textColor="#667085"
+                android:textSize="13sp" />
 
-    <!-- 底部控制栏 -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="8dp"
-        android:background="#f0f0f0">
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:hint="RTSP 地址"
+                app:boxBackgroundMode="outline"
+                app:helperText="示例：rtsp://192.168.1.10:554/live"
+                app:startIconDrawable="@android:drawable/ic_menu_share">
 
-        <Button
-            android:id="@+id/btn_play"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="播放"
-            android:layout_marginEnd="4dp" />
-
-        <Button
-            android:id="@+id/btn_stop"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="停止"
-            android:layout_marginStart="4dp"
-            android:layout_marginEnd="4dp" />
-
-        <Button
-            android:id="@+id/btn_record"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="录制"
-            android:layout_marginStart="4dp" />
-
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:paddingStart="8dp"
-        android:paddingEnd="8dp"
-        android:paddingBottom="8dp"
-        android:background="#f0f0f0">
-
-        <Button
-            android:id="@+id/btn_destroy"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="销毁流" />
-
-    </LinearLayout>
-
-    <!-- 状态信息 -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="8dp"
-        android:background="#e0e0e0">
-
-        <TextView
-            android:id="@+id/tv_stream_info"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="流信息: 无"
-            android:textSize="12sp" />
-
-        <TextView
-            android:id="@+id/tv_record_info"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="录制状态: 未录制"
-            android:textSize="12sp" />
-
-    </LinearLayout>
-
-    <!-- 性能监控面板（可展开/折叠） -->
-    <androidx.cardview.widget.CardView
-        android:id="@+id/performanceMonitorCard"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_margin="8dp"
-        android:visibility="gone"
-        app:cardCornerRadius="8dp"
-        app:cardElevation="4dp">
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/et_rtsp_url"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="RTSP 地址"
+                    android:inputType="textUri"
+                    android:text="rtsp://stream.strba.sk:1935/strba/VYHLAD_JAZERO.stream" />
+            </com.google.android.material.textfield.TextInputLayout>
+        </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:background="#FFFFFF"
             android:orientation="vertical"
-            android:padding="12dp">
+            android:padding="16dp">
 
-            <!-- 标题栏（可点击展开/折叠） -->
-            <LinearLayout
-                android:id="@+id/performanceMonitorHeader"
+            <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:padding="8dp"
-                android:background="?android:attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true">
+                android:text="画面预览"
+                android:textColor="#101828"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="播放状态会叠加显示在画面中央，便于快速确认当前是否已经拉流成功。"
+                android:textColor="#667085"
+                android:textSize="13sp" />
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="260dp"
+                android:layout_marginTop="12dp"
+                android:background="#0B0F14">
+
+                <SurfaceView
+                    android:id="@+id/surface_view"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent" />
 
                 <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="📊 性能监控"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/performanceMonitorToggle"
+                    android:id="@+id/tv_status"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="▼"
-                    android:textSize="14sp" />
+                    android:layout_gravity="center"
+                    android:text="待播放"
+                    android:textColor="#FFFFFF"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+            </FrameLayout>
 
-            </LinearLayout>
-
-            <!-- 监控内容（可展开/折叠） -->
-            <ScrollView
-                android:id="@+id/performanceMonitorContent"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:maxHeight="400dp"
-                android:visibility="gone">
+                android:layout_marginTop="12dp"
+                android:orientation="horizontal">
 
-                <TextView
-                    android:id="@+id/performanceMonitorTextView"
-                    android:layout_width="match_parent"
+                <Button
+                    android:id="@+id/btn_play"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:text="性能监控数据..."
-                    android:textSize="11sp"
-                    android:fontFamily="monospace"
-                    android:lineSpacingExtra="2dp"
-                    android:padding="8dp" />
+                    android:layout_marginEnd="6dp"
+                    android:layout_weight="1"
+                    android:text="播放" />
 
-            </ScrollView>
-
+                <Button
+                    android:id="@+id/btn_stop"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:layout_weight="1"
+                    android:text="停止" />
             </LinearLayout>
 
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/btn_record"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="6dp"
+                    android:layout_weight="1"
+                    android:text="开始录制" />
+
+                <Button
+                    android:id="@+id/btn_destroy"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:layout_weight="1"
+                    android:text="销毁播放器" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:background="#FFFFFF"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="播放配置"
+                android:textColor="#101828"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="保留默认值通常就够用。单位和建议范围写在每个字段下面。"
+                android:textColor="#667085"
+                android:textSize="13sp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:orientation="vertical">
+
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/switch_software_decode"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="软解码"
+                    android:textColor="#101828" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:text="关闭时优先使用硬解码。"
+                    android:textColor="#667085"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:orientation="vertical">
+
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/switch_audio_enabled"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:checked="true"
+                    android:text="启用音频"
+                    android:textColor="#101828" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:text="关闭后只播放视频，不会初始化音频输出。"
+                    android:textColor="#667085"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:orientation="vertical">
+
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/switch_fast_seek"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:checked="true"
+                    android:text="启用 Fast Seek"
+                    android:textColor="#101828" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:text="优化定位和追帧速度，直播场景通常保持开启。"
+                    android:textColor="#667085"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:orientation="vertical">
+
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/switch_recovery_enabled"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:checked="true"
+                    android:text="断流自动恢复"
+                    android:textColor="#101828" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:text="网络中断、无包或连接失败时按下面的恢复策略自动重连。"
+                    android:textColor="#667085"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="RTSP 传输协议"
+                android:textColor="#101828"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="自动模式兼容性最好；TCP 更稳，UDP 延迟更低，组播只在明确使用组播源时选择。"
+                android:textColor="#667085"
+                android:textSize="12sp" />
+
+            <RadioGroup
+                android:id="@+id/rg_transport_protocol"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:checkedButton="@id/rb_transport_auto"
+                android:orientation="vertical">
+
+                <RadioButton
+                    android:id="@+id/rb_transport_auto"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="自动选择" />
+
+                <RadioButton
+                    android:id="@+id/rb_transport_tcp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="TCP：更稳定，丢包少" />
+
+                <RadioButton
+                    android:id="@+id/rb_transport_udp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="UDP：更低延迟" />
+
+                <RadioButton
+                    android:id="@+id/rb_transport_multicast"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="组播：仅限组播源" />
+            </RadioGroup>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="渲染器"
+                android:textColor="#101828"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="自动模式会根据设备能力选择渲染方式。"
+                android:textColor="#667085"
+                android:textSize="12sp" />
+
+            <RadioGroup
+                android:id="@+id/rg_renderer_type"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:checkedButton="@id/rb_renderer_auto"
+                android:orientation="vertical">
+
+                <RadioButton
+                    android:id="@+id/rb_renderer_auto"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="自动" />
+
+                <RadioButton
+                    android:id="@+id/rb_renderer_software"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="软件渲染：兼容性优先" />
+
+                <RadioButton
+                    android:id="@+id/rb_renderer_opengl"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="OpenGL：性能优先" />
+            </RadioGroup>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="延迟模式"
+                android:textColor="#101828"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="均衡模式更稳；超低延迟模式更适合实时预览和对讲类场景。"
+                android:textColor="#667085"
+                android:textSize="12sp" />
+
+            <RadioGroup
+                android:id="@+id/rg_latency_mode"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:checkedButton="@id/rb_latency_ultra_low"
+                android:orientation="vertical">
+
+                <RadioButton
+                    android:id="@+id/rb_latency_balanced"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="均衡：稳定优先" />
+
+                <RadioButton
+                    android:id="@+id/rb_latency_ultra_low"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="超低延迟：时效优先" />
+            </RadioGroup>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="主时钟策略"
+                android:textColor="#101828"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="一般保持自动。音频主时钟适合重视声音连续性；视频主时钟适合更看重画面节奏。"
+                android:textColor="#667085"
+                android:textSize="12sp" />
+
+            <RadioGroup
+                android:id="@+id/rg_clock_policy"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:checkedButton="@id/rb_clock_auto"
+                android:orientation="vertical">
+
+                <RadioButton
+                    android:id="@+id/rb_clock_auto"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="自动" />
+
+                <RadioButton
+                    android:id="@+id/rb_clock_audio_master"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="音频主时钟" />
+
+                <RadioButton
+                    android:id="@+id/rb_clock_video_master"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="视频主时钟" />
+            </RadioGroup>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:hint="缓冲区大小"
+                app:boxBackgroundMode="outline"
+                app:helperText="单位：字节。默认 4096，网络抖动大时可适当调高。"
+                app:suffixText="B">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/et_buffer_size"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="缓冲区大小"
+                    android:inputType="number"
+                    android:text="4096" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:hint="超时时间"
+                app:boxBackgroundMode="outline"
+                app:helperText="单位：毫秒。连接或读流超时时间，默认 10000。"
+                app:suffixText="ms">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/et_timeout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="超时时间"
+                    android:inputType="number"
+                    android:text="10000" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:hint="初始音频缓冲"
+                app:boxBackgroundMode="outline"
+                app:helperText="单位：毫秒。范围 20-1000，数值越大越稳，越小越跟手。"
+                app:suffixText="ms">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/et_audio_init_buffer_ms"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="初始音频缓冲"
+                    android:inputType="number"
+                    android:text="200" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:hint="最大恢复次数"
+                app:boxBackgroundMode="outline"
+                app:helperText="断流后最多重试多少次。默认 3 次。"
+                app:suffixText="次">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/et_recovery_max_attempts"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="最大恢复次数"
+                    android:inputType="number"
+                    android:text="3" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:hint="恢复间隔"
+                app:boxBackgroundMode="outline"
+                app:helperText="单位：毫秒。两次重试之间等待多久。"
+                app:suffixText="ms">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/et_recovery_interval_ms"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="恢复间隔"
+                    android:inputType="number"
+                    android:text="300" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:hint="无包超时"
+                app:boxBackgroundMode="outline"
+                app:helperText="单位：毫秒。超过这个时间没收到数据包，就判定需要恢复。"
+                app:suffixText="ms">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/et_recovery_no_packet_timeout_ms"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="无包超时"
+                    android:inputType="number"
+                    android:text="1500" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:hint="连接超时"
+                app:boxBackgroundMode="outline"
+                app:helperText="单位：毫秒。单次重连在多长时间内必须建立连接。"
+                app:suffixText="ms">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/et_recovery_connect_timeout_ms"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="连接超时"
+                    android:inputType="number"
+                    android:text="3000" />
+            </com.google.android.material.textfield.TextInputLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:background="#FFFFFF"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="状态信息"
+                android:textColor="#101828"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tv_stream_info"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="流信息: 无"
+                android:textColor="#344054"
+                android:textSize="13sp" />
+
+            <TextView
+                android:id="@+id/tv_record_info"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="录制状态: 未录制"
+                android:textColor="#344054"
+                android:textSize="13sp" />
+        </LinearLayout>
+
+        <androidx.cardview.widget.CardView
+            android:id="@+id/performanceMonitorCard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:visibility="gone"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="2dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="12dp">
+
+                <LinearLayout
+                    android:id="@+id/performanceMonitorHeader"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="?android:attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="8dp">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="性能监控"
+                        android:textColor="#101828"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/performanceMonitorToggle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="▼"
+                        android:textColor="#475467"
+                        android:textSize="14sp" />
+                </LinearLayout>
+
+                <ScrollView
+                    android:id="@+id/performanceMonitorContent"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:maxHeight="400dp"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:id="@+id/performanceMonitorTextView"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="monospace"
+                        android:lineSpacingExtra="2dp"
+                        android:padding="8dp"
+                        android:text="性能监控数据..."
+                        android:textColor="#344054"
+                        android:textSize="11sp" />
+                </ScrollView>
+            </LinearLayout>
         </androidx.cardview.widget.CardView>
-
     </LinearLayout>
-
 </ScrollView>
