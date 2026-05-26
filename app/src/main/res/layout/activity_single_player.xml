@@ -156,27 +156,57 @@
             android:orientation="vertical"
             android:padding="16dp">
 
-            <TextView
+            <LinearLayout
+                android:id="@+id/configSectionHeader"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="播放配置"
-                android:textColor="#101828"
-                android:textSize="18sp"
-                android:textStyle="bold" />
+                android:background="?android:attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingTop="4dp"
+                android:paddingBottom="4dp">
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:text="保留默认值通常就够用。单位和建议范围写在每个字段下面。"
-                android:textColor="#667085"
-                android:textSize="13sp" />
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="高级配置"
+                        android:textColor="#101828"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="默认值通常就够用。点击展开后可以查看每个参数的单位和说明。"
+                        android:textColor="#667085"
+                        android:textSize="13sp" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/configSectionToggle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="展开"
+                    android:textColor="#475467"
+                    android:textSize="14sp" />
+            </LinearLayout>
 
             <LinearLayout
+                android:id="@+id/configSectionContent"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
-                android:orientation="vertical">
+                android:orientation="vertical"
+                android:visibility="gone">
 
                 <com.google.android.material.switchmaterial.SwitchMaterial
                     android:id="@+id/switch_software_decode"
@@ -192,7 +222,6 @@
                     android:text="关闭时优先使用硬解码。"
                     android:textColor="#667085"
                     android:textSize="12sp" />
-            </LinearLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -564,6 +593,8 @@
                     android:inputType="number"
                     android:text="3000" />
             </com.google.android.material.textfield.TextInputLayout>
+
+        </LinearLayout>
         </LinearLayout>
 
         <LinearLayout

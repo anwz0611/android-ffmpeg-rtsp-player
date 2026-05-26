@@ -65,6 +65,9 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
     private lateinit var etRecoveryIntervalMs: EditText
     private lateinit var etRecoveryNoPacketTimeoutMs: EditText
     private lateinit var etRecoveryConnectTimeoutMs: EditText
+    private lateinit var configSectionHeader: View
+    private lateinit var configSectionToggle: TextView
+    private lateinit var configSectionContent: View
 
     private lateinit var performanceMonitorCard: CardView
     private lateinit var performanceMonitorHeader: View
@@ -80,6 +83,7 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
     private var pendingRecordingDisplayName: String? = null
     private var requestedRecordingFile: File? = null
     private var isPlaybackRequested = false
+    private var isConfigSectionExpanded = false
     private var isPerformanceMonitorExpanded = false
     private var isPerformanceMonitoring = false
     private var monitoringStartTime = 0L
@@ -131,6 +135,9 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
         etRecoveryIntervalMs = findViewById(R.id.et_recovery_interval_ms)
         etRecoveryNoPacketTimeoutMs = findViewById(R.id.et_recovery_no_packet_timeout_ms)
         etRecoveryConnectTimeoutMs = findViewById(R.id.et_recovery_connect_timeout_ms)
+        configSectionHeader = findViewById(R.id.configSectionHeader)
+        configSectionToggle = findViewById(R.id.configSectionToggle)
+        configSectionContent = findViewById(R.id.configSectionContent)
 
         performanceMonitorCard = findViewById(R.id.performanceMonitorCard)
         performanceMonitorHeader = findViewById(R.id.performanceMonitorHeader)
@@ -138,11 +145,13 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
         performanceMonitorContent = findViewById(R.id.performanceMonitorContent)
         performanceMonitorTextView = findViewById(R.id.performanceMonitorTextView)
 
+        updateConfigSectionVisibility()
         etRtspUrl.setText("rtsp://192.168.144.130:554")
         surfaceView.holder.addCallback(this)
     }
 
     private fun setupListeners() {
+        configSectionHeader.setOnClickListener { toggleConfigSection() }
         performanceMonitorHeader.setOnClickListener { togglePerformanceMonitor() }
         btnPlay.setOnClickListener { ensurePlayerAndPlay() }
         btnStop.setOnClickListener { stopPlayer() }
@@ -500,6 +509,16 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
         isPerformanceMonitorExpanded = !isPerformanceMonitorExpanded
         performanceMonitorContent.visibility = if (isPerformanceMonitorExpanded) View.VISIBLE else View.GONE
         performanceMonitorToggle.text = if (isPerformanceMonitorExpanded) "▲" else "▼"
+    }
+
+    private fun toggleConfigSection() {
+        isConfigSectionExpanded = !isConfigSectionExpanded
+        updateConfigSectionVisibility()
+    }
+
+    private fun updateConfigSectionVisibility() {
+        configSectionContent.visibility = if (isConfigSectionExpanded) View.VISIBLE else View.GONE
+        configSectionToggle.text = if (isConfigSectionExpanded) "收起" else "展开"
     }
 
     private fun startPerformanceMonitoring() {
