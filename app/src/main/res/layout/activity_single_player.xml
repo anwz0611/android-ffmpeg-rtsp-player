@@ -208,391 +208,460 @@
                 android:orientation="vertical"
                 android:visibility="gone">
 
-                <com.google.android.material.switchmaterial.SwitchMaterial
-                    android:id="@+id/switch_software_decode"
+                <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="软解码"
-                    android:textColor="#101828" />
+                    android:text="常用选项"
+                    android:textColor="#101828"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
 
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="4dp"
-                    android:text="关闭时优先使用硬解码。"
+                    android:layout_marginTop="2dp"
+                    android:text="这些是最常改的项，优先从这里调整。"
                     android:textColor="#667085"
                     android:textSize="12sp" />
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:orientation="vertical">
-
-                <com.google.android.material.switchmaterial.SwitchMaterial
-                    android:id="@+id/switch_audio_enabled"
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:checked="true"
-                    android:text="启用音频"
-                    android:textColor="#101828" />
+                    android:layout_marginTop="12dp"
+                    android:orientation="vertical">
 
-                <TextView
+                    <com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/switch_software_decode"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="软解码"
+                        android:textColor="#101828" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="4dp"
+                        android:text="关闭时优先使用硬解码。"
+                        android:textColor="#667085"
+                        android:textSize="12sp" />
+                </LinearLayout>
+
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="4dp"
-                    android:text="关闭后只播放视频，不会初始化音频输出。"
-                    android:textColor="#667085"
-                    android:textSize="12sp" />
-            </LinearLayout>
+                    android:layout_marginTop="10dp"
+                    android:orientation="vertical">
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:orientation="vertical">
+                    <com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/switch_audio_enabled"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:checked="true"
+                        android:text="启用音频"
+                        android:textColor="#101828" />
 
-                <com.google.android.material.switchmaterial.SwitchMaterial
-                    android:id="@+id/switch_fast_seek"
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="4dp"
+                        android:text="关闭后只播放视频，不会初始化音频输出。"
+                        android:textColor="#667085"
+                        android:textSize="12sp" />
+                </LinearLayout>
+
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:checked="true"
-                    android:text="启用 Fast Seek"
-                    android:textColor="#101828" />
+                    android:layout_marginTop="10dp"
+                    android:orientation="vertical">
 
-                <TextView
+                    <com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/switch_fast_seek"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:checked="true"
+                        android:text="启用 Fast Seek"
+                        android:textColor="#101828" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="4dp"
+                        android:text="优化定位和追帧速度，直播场景通常保持开启。"
+                        android:textColor="#667085"
+                        android:textSize="12sp" />
+                </LinearLayout>
+
+                <com.google.android.material.textfield.TextInputLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="4dp"
-                    android:text="优化定位和追帧速度，直播场景通常保持开启。"
-                    android:textColor="#667085"
-                    android:textSize="12sp" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:orientation="vertical">
-
-                <com.google.android.material.switchmaterial.SwitchMaterial
-                    android:id="@+id/switch_recovery_enabled"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:checked="true"
-                    android:text="断流自动恢复"
-                    android:textColor="#101828" />
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="4dp"
-                    android:text="网络中断、无包或连接失败时按下面的恢复策略自动重连。"
-                    android:textColor="#667085"
-                    android:textSize="12sp" />
-            </LinearLayout>
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text="RTSP 传输协议"
-                android:textColor="#101828"
-                android:textSize="15sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:text="自动模式兼容性最好；TCP 更稳，UDP 延迟更低，组播只在明确使用组播源时选择。"
-                android:textColor="#667085"
-                android:textSize="12sp" />
-
-            <RadioGroup
-                android:id="@+id/rg_transport_protocol"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:checkedButton="@id/rb_transport_auto"
-                android:orientation="vertical">
-
-                <RadioButton
-                    android:id="@+id/rb_transport_auto"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="自动选择" />
-
-                <RadioButton
-                    android:id="@+id/rb_transport_tcp"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="TCP：更稳定，丢包少" />
-
-                <RadioButton
-                    android:id="@+id/rb_transport_udp"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="UDP：更低延迟" />
-
-                <RadioButton
-                    android:id="@+id/rb_transport_multicast"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="组播：仅限组播源" />
-            </RadioGroup>
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text="渲染器"
-                android:textColor="#101828"
-                android:textSize="15sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:text="自动模式会根据设备能力选择渲染方式。"
-                android:textColor="#667085"
-                android:textSize="12sp" />
-
-            <RadioGroup
-                android:id="@+id/rg_renderer_type"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:checkedButton="@id/rb_renderer_auto"
-                android:orientation="vertical">
-
-                <RadioButton
-                    android:id="@+id/rb_renderer_auto"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="自动" />
-
-                <RadioButton
-                    android:id="@+id/rb_renderer_software"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="软件渲染：兼容性优先" />
-
-                <RadioButton
-                    android:id="@+id/rb_renderer_opengl"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="OpenGL：性能优先" />
-            </RadioGroup>
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text="延迟模式"
-                android:textColor="#101828"
-                android:textSize="15sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:text="均衡模式更稳；超低延迟模式更适合实时预览和对讲类场景。"
-                android:textColor="#667085"
-                android:textSize="12sp" />
-
-            <RadioGroup
-                android:id="@+id/rg_latency_mode"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:checkedButton="@id/rb_latency_ultra_low"
-                android:orientation="vertical">
-
-                <RadioButton
-                    android:id="@+id/rb_latency_balanced"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="均衡：稳定优先" />
-
-                <RadioButton
-                    android:id="@+id/rb_latency_ultra_low"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="超低延迟：时效优先" />
-            </RadioGroup>
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text="主时钟策略"
-                android:textColor="#101828"
-                android:textSize="15sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:text="一般保持自动。音频主时钟适合重视声音连续性；视频主时钟适合更看重画面节奏。"
-                android:textColor="#667085"
-                android:textSize="12sp" />
-
-            <RadioGroup
-                android:id="@+id/rg_clock_policy"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:checkedButton="@id/rb_clock_auto"
-                android:orientation="vertical">
-
-                <RadioButton
-                    android:id="@+id/rb_clock_auto"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="自动" />
-
-                <RadioButton
-                    android:id="@+id/rb_clock_audio_master"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="音频主时钟" />
-
-                <RadioButton
-                    android:id="@+id/rb_clock_video_master"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="视频主时钟" />
-            </RadioGroup>
-
-            <com.google.android.material.textfield.TextInputLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:hint="缓冲区大小"
-                app:boxBackgroundMode="outline"
-                app:helperText="单位：字节。默认 4096，网络抖动大时可适当调高。"
-                app:suffixText="B">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/et_buffer_size"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
                     android:hint="缓冲区大小"
-                    android:inputType="number"
-                    android:text="4096" />
-            </com.google.android.material.textfield.TextInputLayout>
+                    app:boxBackgroundMode="outline"
+                    app:helperText="单位：字节。默认 4096，网络抖动大时可适当调高。"
+                    app:suffixText="B">
 
-            <com.google.android.material.textfield.TextInputLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:hint="超时时间"
-                app:boxBackgroundMode="outline"
-                app:helperText="单位：毫秒。连接或读流超时时间，默认 10000。"
-                app:suffixText="ms">
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/et_buffer_size"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="缓冲区大小"
+                        android:inputType="number"
+                        android:text="4096" />
+                </com.google.android.material.textfield.TextInputLayout>
 
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/et_timeout"
+                <com.google.android.material.textfield.TextInputLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
                     android:hint="超时时间"
-                    android:inputType="number"
-                    android:text="10000" />
-            </com.google.android.material.textfield.TextInputLayout>
+                    app:boxBackgroundMode="outline"
+                    app:helperText="单位：毫秒。连接或读流超时时间，默认 10000。"
+                    app:suffixText="ms">
 
-            <com.google.android.material.textfield.TextInputLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:hint="初始音频缓冲"
-                app:boxBackgroundMode="outline"
-                app:helperText="单位：毫秒。范围 20-1000，数值越大越稳，越小越跟手。"
-                app:suffixText="ms">
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/et_timeout"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="超时时间"
+                        android:inputType="number"
+                        android:text="10000" />
+                </com.google.android.material.textfield.TextInputLayout>
 
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/et_audio_init_buffer_ms"
+                <com.google.android.material.textfield.TextInputLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
                     android:hint="初始音频缓冲"
-                    android:inputType="number"
-                    android:text="200" />
-            </com.google.android.material.textfield.TextInputLayout>
+                    app:boxBackgroundMode="outline"
+                    app:helperText="单位：毫秒。范围 20-1000，数值越大越稳，越小越跟手。"
+                    app:suffixText="ms">
 
-            <com.google.android.material.textfield.TextInputLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:hint="最大恢复次数"
-                app:boxBackgroundMode="outline"
-                app:helperText="断流后最多重试多少次。默认 3 次。"
-                app:suffixText="次">
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/et_audio_init_buffer_ms"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="初始音频缓冲"
+                        android:inputType="number"
+                        android:text="200" />
+                </com.google.android.material.textfield.TextInputLayout>
 
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/et_recovery_max_attempts"
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginTop="16dp"
+                    android:background="#EAECF0" />
+
+                <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="渲染与延迟"
+                    android:textColor="#101828"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="这一组决定拉流稳定性、显示方式和实时性。"
+                    android:textColor="#667085"
+                    android:textSize="12sp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="RTSP 传输协议"
+                    android:textColor="#101828"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="自动模式兼容性最好；TCP 更稳，UDP 延迟更低，组播只在明确使用组播源时选择。"
+                    android:textColor="#667085"
+                    android:textSize="12sp" />
+
+                <RadioGroup
+                    android:id="@+id/rg_transport_protocol"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:checkedButton="@id/rb_transport_auto"
+                    android:orientation="vertical">
+
+                    <RadioButton
+                        android:id="@+id/rb_transport_auto"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="自动选择" />
+
+                    <RadioButton
+                        android:id="@+id/rb_transport_tcp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="TCP：更稳定，丢包少" />
+
+                    <RadioButton
+                        android:id="@+id/rb_transport_udp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="UDP：更低延迟" />
+
+                    <RadioButton
+                        android:id="@+id/rb_transport_multicast"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="组播：仅限组播源" />
+                </RadioGroup>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="渲染器"
+                    android:textColor="#101828"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="自动模式会根据设备能力选择渲染方式。"
+                    android:textColor="#667085"
+                    android:textSize="12sp" />
+
+                <RadioGroup
+                    android:id="@+id/rg_renderer_type"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:checkedButton="@id/rb_renderer_auto"
+                    android:orientation="vertical">
+
+                    <RadioButton
+                        android:id="@+id/rb_renderer_auto"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="自动" />
+
+                    <RadioButton
+                        android:id="@+id/rb_renderer_software"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="软件渲染：兼容性优先" />
+
+                    <RadioButton
+                        android:id="@+id/rb_renderer_opengl"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="OpenGL：性能优先" />
+                </RadioGroup>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="延迟模式"
+                    android:textColor="#101828"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="均衡模式更稳；超低延迟模式更适合实时预览和对讲类场景。"
+                    android:textColor="#667085"
+                    android:textSize="12sp" />
+
+                <RadioGroup
+                    android:id="@+id/rg_latency_mode"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:checkedButton="@id/rb_latency_ultra_low"
+                    android:orientation="vertical">
+
+                    <RadioButton
+                        android:id="@+id/rb_latency_balanced"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="均衡：稳定优先" />
+
+                    <RadioButton
+                        android:id="@+id/rb_latency_ultra_low"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="超低延迟：时效优先" />
+                </RadioGroup>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="主时钟策略"
+                    android:textColor="#101828"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="一般保持自动。音频主时钟适合重视声音连续性；视频主时钟适合更看重画面节奏。"
+                    android:textColor="#667085"
+                    android:textSize="12sp" />
+
+                <RadioGroup
+                    android:id="@+id/rg_clock_policy"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:checkedButton="@id/rb_clock_auto"
+                    android:orientation="vertical">
+
+                    <RadioButton
+                        android:id="@+id/rb_clock_auto"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="自动" />
+
+                    <RadioButton
+                        android:id="@+id/rb_clock_audio_master"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="音频主时钟" />
+
+                    <RadioButton
+                        android:id="@+id/rb_clock_video_master"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="视频主时钟" />
+                </RadioGroup>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginTop="16dp"
+                    android:background="#EAECF0" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="恢复策略"
+                    android:textColor="#101828"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="断流、无包或连接失败时，按这一组参数决定是否自动恢复以及恢复频率。"
+                    android:textColor="#667085"
+                    android:textSize="12sp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:orientation="vertical">
+
+                    <com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/switch_recovery_enabled"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:checked="true"
+                        android:text="断流自动恢复"
+                        android:textColor="#101828" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="4dp"
+                        android:text="网络中断、无包或连接失败时按下面的恢复策略自动重连。"
+                        android:textColor="#667085"
+                        android:textSize="12sp" />
+                </LinearLayout>
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
                     android:hint="最大恢复次数"
-                    android:inputType="number"
-                    android:text="3" />
-            </com.google.android.material.textfield.TextInputLayout>
+                    app:boxBackgroundMode="outline"
+                    app:helperText="断流后最多重试多少次。默认 3 次。"
+                    app:suffixText="次">
 
-            <com.google.android.material.textfield.TextInputLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:hint="恢复间隔"
-                app:boxBackgroundMode="outline"
-                app:helperText="单位：毫秒。两次重试之间等待多久。"
-                app:suffixText="ms">
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/et_recovery_max_attempts"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="最大恢复次数"
+                        android:inputType="number"
+                        android:text="3" />
+                </com.google.android.material.textfield.TextInputLayout>
 
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/et_recovery_interval_ms"
+                <com.google.android.material.textfield.TextInputLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
                     android:hint="恢复间隔"
-                    android:inputType="number"
-                    android:text="300" />
-            </com.google.android.material.textfield.TextInputLayout>
+                    app:boxBackgroundMode="outline"
+                    app:helperText="单位：毫秒。两次重试之间等待多久。"
+                    app:suffixText="ms">
 
-            <com.google.android.material.textfield.TextInputLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:hint="无包超时"
-                app:boxBackgroundMode="outline"
-                app:helperText="单位：毫秒。超过这个时间没收到数据包，就判定需要恢复。"
-                app:suffixText="ms">
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/et_recovery_interval_ms"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="恢复间隔"
+                        android:inputType="number"
+                        android:text="300" />
+                </com.google.android.material.textfield.TextInputLayout>
 
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/et_recovery_no_packet_timeout_ms"
+                <com.google.android.material.textfield.TextInputLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
                     android:hint="无包超时"
-                    android:inputType="number"
-                    android:text="1500" />
-            </com.google.android.material.textfield.TextInputLayout>
+                    app:boxBackgroundMode="outline"
+                    app:helperText="单位：毫秒。超过这个时间没收到数据包，就判定需要恢复。"
+                    app:suffixText="ms">
 
-            <com.google.android.material.textfield.TextInputLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:hint="连接超时"
-                app:boxBackgroundMode="outline"
-                app:helperText="单位：毫秒。单次重连在多长时间内必须建立连接。"
-                app:suffixText="ms">
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/et_recovery_no_packet_timeout_ms"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="无包超时"
+                        android:inputType="number"
+                        android:text="1500" />
+                </com.google.android.material.textfield.TextInputLayout>
 
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/et_recovery_connect_timeout_ms"
+                <com.google.android.material.textfield.TextInputLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
                     android:hint="连接超时"
-                    android:inputType="number"
-                    android:text="3000" />
-            </com.google.android.material.textfield.TextInputLayout>
+                    app:boxBackgroundMode="outline"
+                    app:helperText="单位：毫秒。单次重连在多长时间内必须建立连接。"
+                    app:suffixText="ms">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/et_recovery_connect_timeout_ms"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="连接超时"
+                        android:inputType="number"
+                        android:text="3000" />
+                </com.google.android.material.textfield.TextInputLayout>
 
         </LinearLayout>
         </LinearLayout>
