@@ -16,6 +16,7 @@ import com.jxj.ffmpegrtsp.lib.api.StreamConfig
 import com.jxj.ffmpegrtsp.lib.api.StreamErrorCode
 import com.jxj.ffmpegrtsp.lib.api.StreamPlayer
 import com.jxj.ffmpegrtsp.lib.api.StreamStateCode
+import com.jxj.ffmpegrtsp.lib.api.YuvPerformanceStats
 import com.jxj.ffmpegrtsp.lib.yuv.IAsyncYUVProcessor
 import com.jxj.ffmpegrtsp.lib.yuv.IYUVFrameProcessor
 import com.jxj.ffmpegrtsp.lib.yuv.YUVFrameInfo
@@ -31,19 +32,21 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
 
 /**
- * YUV 数据处理示例。
+ * YUV 数据暴露功能测试 Activity。
  *
- * 使用新的 StreamPlayer API 展示：
- * 1. 注册同步/异步 YUV 处理器
- * 2. 控制内置渲染
- * 3. 读取处理性能和内存统计
+ * 固定使用软件解码，验证 YUV 扩展链路当前的四种工作模式：
+ * 1. OBSERVE_ONLY - AI 分析、统计、截图辅助
+ * 2. PROCESS_AND_RENDER - software pipeline 处理后渲染
+ * 3. CUSTOM_RENDER_ONLY - software pipeline 跳过内置渲染
+ * 4. IAsyncYUVProcessor - 异步快照分析
  */
 class YUVTestActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
 
     companion object {
         private const val TAG = "YUVTestActivity"
         private const val MAX_LOG_LENGTH = 4000
-        private const val STATS_UPDATE_INTERVAL_MS = 100L
+        private const val FRAME_STATS_UPDATE_INTERVAL_MS = 100L
+        private const val PERIODIC_STATS_UPDATE_INTERVAL_MS = 500L
     }
 
     private lateinit var videoSurface: SurfaceView
@@ -98,6 +101,14 @@ class YUVTestActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
     private val mainHandler = Handler(Looper.getMainLooper())
     private val logBuilder = StringBuilder()
     private var lastStatsUpdateTime = 0L
+    private val statsUpdateRunnable = object : Runnable {
+        override fun run() {
+            if (isStreamStarted && player != null) {
+                updateUI()
+                mainHandler.postDelayed(this, PERIODIC_STATS_UPDATE_INTERVAL_MS)
+            }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -107,7 +118,8 @@ class YUVTestActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
         initViews()
         setupListeners()
         createProcessors()
-        appendLog("YUV 示例已初始化")
+        appendLog("YUVTestActivity 创建")
+        appendLog("初始化完成 - 软件解码 YUV 四种处理模式就绪")
         updateUI()
     }
 
@@ -203,11 +215,12 @@ class YUVTestActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
             override fun getProcessMode(): YUVProcessMode = YUVProcessMode.OBSERVE_ONLY
 
             override fun onProcessFrame(frame: YUVFrameInfo): YUVProcessResult {
-                asyncFrameCount.incrementAndGet()
+                // 异步链路默认只走 processFrameAsync()；这里只是满足接口实现。
                 return YUVProcessResult.passthrough()
             }
 
             override fun processFrameAsync(frame: YUVFrameInfo): CompletableFuture<YUVProcessResult> {
+                asyncFrameCount.incrementAndGet()
                 return CompletableFuture.supplyAsync({
                     try {
                         Thread.sleep(20)
@@ -252,6 +265,9 @@ class YUVTestActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
             return
         }
 
+        appendLog("开始播放: $url")
+        appendLog("YUV 测试页固定使用软件解码，YUV 回调/处理后渲染仅在 software pipeline 生效")
+
         val currentPlayer = player
         if (currentPlayer != null && !currentPlayer.isReleased()) {
             isStreamStarted = true
@@ -279,18 +295,22 @@ class YUVTestActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
                     "${it.width}x${it.height} ${it.codec}"
                 } ?: "视频信息暂不可用"
                 appendLog("播放开始: $playbackInfo")
+                mainHandler.removeCallbacks(statsUpdateRunnable)
+                mainHandler.post(statsUpdateRunnable)
                 updateUI()
             }
             .setOnPlaybackStopped {
                 isStreamStarted = false
                 refreshStateFromPlayer()
                 appendLog("播放已停止")
+                mainHandler.removeCallbacks(statsUpdateRunnable)
                 updateUI()
             }
             .setOnError { errorCode, errorMessage ->
                 isStreamStarted = false
                 refreshStateFromPlayer()
                 appendLog("播放器错误: $errorCode / $errorMessage")
+                mainHandler.removeCallbacks(statsUpdateRunnable)
                 updateUI()
             }
 
@@ -300,6 +320,7 @@ class YUVTestActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
 
     private fun stopStream() {
         isStreamStarted = false
+        mainHandler.removeCallbacks(statsUpdateRunnable)
         player?.stop()
         refreshStateFromPlayer()
     }
@@ -319,6 +340,7 @@ class YUVTestActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
 
     private fun releasePlayer() {
         clearAllProcessors()
+        mainHandler.removeCallbacks(statsUpdateRunnable)
         player?.release()
         player = null
         currentState = emptyState()
@@ -335,7 +357,14 @@ class YUVTestActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
             return
         }
         isObserverRegistered = currentPlayer.registerYuvProcessor(observerProcessor)
-        appendLog(if (isObserverRegistered) "已注册观察处理器" else "观察处理器注册失败")
+        appendLog(
+            if (isObserverRegistered) {
+                observerFrameCount.set(0)
+                "已注册观察处理器 (OBSERVE_ONLY)\n用途: software pipeline 只读分析、统计、截图辅助"
+            } else {
+                "观察处理器注册失败"
+            }
+        )
         updateUI()
     }
 
@@ -353,7 +382,14 @@ class YUVTestActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
             return
         }
         isFilterRegistered = currentPlayer.registerYuvProcessor(filterProcessor)
-        appendLog(if (isFilterRegistered) "已注册滤镜处理器" else "滤镜处理器注册失败")
+        appendLog(
+            if (isFilterRegistered) {
+                filterFrameCount.set(0)
+                "已注册滤镜处理器 (PROCESS_AND_RENDER)\n用途: software pipeline 滤镜/美颜/水印，处理后输出回写渲染"
+            } else {
+                "滤镜处理器注册失败"
+            }
+        )
         updateUI()
     }
 
@@ -371,7 +407,14 @@ class YUVTestActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
             return
         }
         isCustomRegistered = currentPlayer.registerYuvProcessor(customProcessor)
-        appendLog(if (isCustomRegistered) "已注册自定义渲染处理器" else "自定义渲染处理器注册失败")
+        appendLog(
+            if (isCustomRegistered) {
+                customFrameCount.set(0)
+                "已注册自定义渲染处理器 (CUSTOM_RENDER_ONLY)\n用途: software pipeline 自定义 OpenGL 渲染、推流输出\n注意: 该模式会跳过内置渲染；未自行出图时画面会黑屏"
+            } else {
+                "自定义渲染处理器注册失败"
+            }
+        )
         updateUI()
     }
 
@@ -389,7 +432,15 @@ class YUVTestActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
             return
         }
         isAsyncRegistered = currentPlayer.registerYuvProcessor(asyncProcessor)
-        appendLog(if (isAsyncRegistered) "已注册异步处理器" else "异步处理器注册失败")
+        appendLog(
+            if (isAsyncRegistered) {
+                asyncFrameCount.set(0)
+                asyncCompletedCount.set(0)
+                "已注册异步处理器 (IAsyncYUVProcessor)\n用途: software pipeline 异步快照分析、云端处理\n特性: 走 owned snapshot，不阻塞解码线程"
+            } else {
+                "异步处理器注册失败"
+            }
+        )
         updateUI()
     }
 
@@ -403,23 +454,28 @@ class YUVTestActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
     private fun setBuiltinRender(enable: Boolean) {
         val currentPlayer = player ?: return showNotReady()
         currentPlayer.setBuiltinRenderEnabled(enable)
-        appendLog(if (enable) "已启用内置渲染" else "已禁用内置渲染")
+        appendLog(if (enable) "已启用 software pipeline 内置渲染" else "已禁用 software pipeline 内置渲染")
         updateUI()
     }
 
     private fun clearAllProcessors() {
         player?.clearYuvProcessors()
+        player?.resetYuvPerformanceStats()
         isObserverRegistered = false
         isFilterRegistered = false
         isCustomRegistered = false
         isAsyncRegistered = false
         resetStats()
+        appendLog("已清空所有处理器并重置 YUV 统计")
         updateUI()
     }
 
     override fun surfaceCreated(holder: SurfaceHolder) {
         isSurfaceReady = true
         appendLog("Surface 已就绪")
+        if (player != null) {
+            appendLog("Surface 由 StreamPlayer 自动接管")
+        }
         refreshStateFromPlayer()
     }
 
@@ -439,11 +495,13 @@ class YUVTestActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
     }
 
     override fun onPause() {
+        mainHandler.removeCallbacks(statsUpdateRunnable)
         refreshStateFromPlayer()
         super.onPause()
     }
 
     override fun onDestroy() {
+        mainHandler.removeCallbacksAndMessages(null)
         releasePlayer()
         asyncExecutor.shutdown()
         try {
@@ -465,6 +523,7 @@ class YUVTestActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
             val isPlaying = hasPlayer && (currentState.isPlaying || isStreamStarted)
             val renderEnabled = currentPlayer?.isBuiltinRenderEnabled() == true
             val canOperatePlayer = hasPlayer && !isPending
+            val perfStats = currentPlayer?.getYuvPerformanceStats()
 
             startStreamButton.isEnabled = isSurfaceReady && !isPlaying && !isPending
             stopStreamButton.isEnabled = hasPlayer && isPlaying && !isPending
@@ -488,7 +547,7 @@ class YUVTestActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
                 isPlaying -> "状态: 播放中"
                 else -> "状态: 已停止"
             }
-            statusTextView.text = "$status | 内置渲染: ${if (renderEnabled) "开启" else "关闭"}"
+            statusTextView.text = "$status | software 内置渲染: ${if (renderEnabled) "开启" else "关闭"}"
 
             val activeProcessors = mutableListOf<String>()
             if (isObserverRegistered) activeProcessors.add("观察")
@@ -496,18 +555,18 @@ class YUVTestActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
             if (isCustomRegistered) activeProcessors.add("自定义")
             if (isAsyncRegistered) activeProcessors.add("异步")
             processorStatusTextView.text = if (activeProcessors.isEmpty()) {
-                "处理器状态: 无"
+                "处理器状态(software-only): 无"
             } else {
-                "处理器状态: ${activeProcessors.joinToString(" / ")}"
+                buildProcessorStatus(activeProcessors, perfStats)
             }
 
             val total = observerFrameCount.get() + filterFrameCount.get() +
                 customFrameCount.get() + asyncFrameCount.get()
-            frameCountTextView.text = "帧数: $total (观察 ${observerFrameCount.get()} / 滤镜 ${filterFrameCount.get()} / 自定义 ${customFrameCount.get()} / 异步 ${asyncCompletedCount.get()})"
+            frameCountTextView.text = "帧数: $total (观察 ${observerFrameCount.get()} / 滤镜 ${filterFrameCount.get()} / 自定义 ${customFrameCount.get()} / 异步提交 ${asyncFrameCount.get()} / 完成 ${asyncCompletedCount.get()})"
 
             lastFrameInfo?.let {
                 frameInfoTextView.text = "帧: ${it.width}x${it.height}, ${it.format.name}, PTS=${it.pts}, #${it.frameIndex}"
-                yuvDataTextView.text = "YUV: Y=${it.getYSize()} U=${it.getUSize()} V=${it.getVSize()} 步长=${it.yStride}/${it.uvStride}"
+                yuvDataTextView.text = buildYuvDataText(it, perfStats)
             } ?: run {
                 frameInfoTextView.text = "帧信息: 暂无"
                 yuvDataTextView.text = "YUV 数据: 暂无"
@@ -517,7 +576,7 @@ class YUVTestActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
 
     private fun updateStatsIfNeeded(count: Long, frame: YUVFrameInfo, source: String) {
         val now = System.currentTimeMillis()
-        if (now - lastStatsUpdateTime < STATS_UPDATE_INTERVAL_MS) {
+        if (now - lastStatsUpdateTime < FRAME_STATS_UPDATE_INTERVAL_MS) {
             return
         }
         lastStatsUpdateTime = now
@@ -531,7 +590,7 @@ class YUVTestActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
             customFrameCount.get() + asyncFrameCount.get()
         frameCountTextView.text = String.format(
             Locale.getDefault(),
-            "帧数: %d (观察 %d / 滤镜 %d / 自定义 %d / 异步 %d/%d) 来源: %s",
+            "帧数: %d (观察 %d / 滤镜 %d / 自定义 %d / 异步提交 %d / 完成 %d) 来源: %s",
             total,
             observerFrameCount.get(),
             filterFrameCount.get(),
@@ -567,6 +626,43 @@ class YUVTestActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
         asyncFrameCount.set(0)
         asyncCompletedCount.set(0)
         lastFrameInfo = null
+        lastStatsUpdateTime = 0L
+    }
+
+    private fun buildProcessorStatus(
+        activeProcessors: List<String>,
+        perfStats: YuvPerformanceStats?
+    ): String {
+        val base = "处理器状态(software-only): ${activeProcessors.joinToString(" / ")}"
+        if (perfStats == null) {
+            return base
+        }
+        return "$base | 队列 ${perfStats.asyncQueueDepth} | 失败 ${perfStats.asyncTasksFailed} | 丢弃 ${perfStats.asyncTasksDropped}"
+    }
+
+    private fun buildYuvDataText(frame: YUVFrameInfo, perfStats: YuvPerformanceStats?): String {
+        val base = String.format(
+            Locale.getDefault(),
+            "YUV: Y=%d U=%d V=%d 步长=%d/%d",
+            frame.getYSize(),
+            frame.getUSize(),
+            frame.getVSize(),
+            frame.yStride,
+            frame.uvStride
+        )
+        if (perfStats == null) {
+            return base
+        }
+        return base + String.format(
+            Locale.getDefault(),
+            "\n异步: queue=%d failed=%d dropped=%d | 回写渲染=%d | JNI wrapper=%d/%d",
+            perfStats.asyncQueueDepth,
+            perfStats.asyncTasksFailed,
+            perfStats.asyncTasksDropped,
+            perfStats.renderProcessedFrames,
+            perfStats.jniTransientWrappersCreated,
+            perfStats.jniOwnedWrappersCreated
+        )
     }
 
     private fun appendLog(message: String) {
