@@ -40,6 +40,15 @@
         android:layout_marginBottom="16dp" />
 
     <Button
+        android:id="@+id/btn_headless_analysis"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:text="Headless 分析模式"
+        android:textSize="18sp"
+        android:backgroundTint="#009688"
+        android:layout_marginBottom="16dp" />
+
+    <Button
         android:id="@+id/btn_transform_test"
         android:layout_width="match_parent"
         android:layout_height="60dp"

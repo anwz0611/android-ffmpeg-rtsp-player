@@ -10,6 +10,7 @@ class MainActivity : BaseInsetsActivity() {
     private lateinit var btnSinglePlayer: Button
     private lateinit var btnMultiPlayer: Button
     private lateinit var btnYuvTest: Button
+    private lateinit var btnHeadlessAnalysis: Button
     private lateinit var btnTransformTest: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -25,6 +26,7 @@ class MainActivity : BaseInsetsActivity() {
         btnSinglePlayer = findViewById(R.id.btn_single_player)
         btnMultiPlayer = findViewById(R.id.btn_multi_player)
         btnYuvTest = findViewById(R.id.btn_yuv_test)
+        btnHeadlessAnalysis = findViewById(R.id.btn_headless_analysis)
         btnTransformTest = findViewById(R.id.btn_transform_test)
     }
 
@@ -39,6 +41,10 @@ class MainActivity : BaseInsetsActivity() {
 
         btnYuvTest.setOnClickListener {
             startActivity(Intent(this, YUVTestActivity::class.java))
+        }
+
+        btnHeadlessAnalysis.setOnClickListener {
+            startActivity(Intent(this, HeadlessAnalysisActivity::class.java))
         }
 
         btnTransformTest.setOnClickListener {

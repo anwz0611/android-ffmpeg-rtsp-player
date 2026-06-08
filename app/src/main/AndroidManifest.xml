@@ -43,6 +43,11 @@
             android:screenOrientation="portrait"
             android:label="YUV 数据测试" />
         <activity
+            android:name=".HeadlessAnalysisActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:label="Headless 分析模式" />
+        <activity
             android:name=".TransformTestActivity"
             android:exported="false"
             android:screenOrientation="portrait"
