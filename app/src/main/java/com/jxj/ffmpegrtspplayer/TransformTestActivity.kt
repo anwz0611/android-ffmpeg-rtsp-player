@@ -90,7 +90,7 @@ class TransformTestActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
         zoomCenterYTextView = findViewById(R.id.zoomCenterYTextView)
         zoomValueTextView = findViewById(R.id.zoomValueTextView)
 
-        urlEditText.setText("http://demo-videos.qnsdk.com/VR-Panorama-Equirect-Angular-4500k.mp4")
+        urlEditText.setText("rtsp://192.168.1.46:8554/screen")
         zoomCenterXSeekBar.progress = 50
         zoomCenterYSeekBar.progress = 50
         videoSurface.holder.addCallback(this)
