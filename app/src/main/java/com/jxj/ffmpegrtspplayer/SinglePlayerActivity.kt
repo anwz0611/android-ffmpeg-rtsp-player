@@ -10,6 +10,7 @@ import android.view.SurfaceHolder
 import android.view.SurfaceView
 import android.view.View
 import android.widget.Button
+import android.widget.RadioButton
 import android.widget.TextView
 import android.widget.Toast
 import androidx.cardview.widget.CardView
@@ -56,6 +57,11 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
     private lateinit var switchRecoveryEnabled: SwitchMaterial
     private lateinit var rgTransportProtocol: RadioGroup
     private lateinit var rgRendererType: RadioGroup
+    private lateinit var rbRendererHwSurfaceDirect: RadioButton
+    private lateinit var rbRendererHwOpenGlTexture: RadioButton
+    private lateinit var rbRendererHwCpuFrameOpenGl: RadioButton
+    private lateinit var rbRendererSwOpenGl: RadioButton
+    private lateinit var rbRendererSwSurface: RadioButton
     private lateinit var rgLatencyMode: RadioGroup
     private lateinit var rgClockPolicy: RadioGroup
     private lateinit var etBufferSize: EditText
@@ -126,6 +132,11 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
         switchRecoveryEnabled = findViewById(R.id.switch_recovery_enabled)
         rgTransportProtocol = findViewById(R.id.rg_transport_protocol)
         rgRendererType = findViewById(R.id.rg_renderer_type)
+        rbRendererHwSurfaceDirect = findViewById(R.id.rb_renderer_hw_surface_direct)
+        rbRendererHwOpenGlTexture = findViewById(R.id.rb_renderer_hw_opengl_texture)
+        rbRendererHwCpuFrameOpenGl = findViewById(R.id.rb_renderer_hw_cpu_frame_opengl)
+        rbRendererSwOpenGl = findViewById(R.id.rb_renderer_sw_opengl)
+        rbRendererSwSurface = findViewById(R.id.rb_renderer_sw_surface)
         rgLatencyMode = findViewById(R.id.rg_latency_mode)
         rgClockPolicy = findViewById(R.id.rg_clock_policy)
         etBufferSize = findViewById(R.id.et_buffer_size)
@@ -146,6 +157,7 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
         performanceMonitorTextView = findViewById(R.id.performanceMonitorTextView)
 
         updateConfigSectionVisibility()
+        updateRendererOptions()
         etRtspUrl.setText("rtsp://192.168.144.130:554")
         surfaceView.holder.addCallback(this)
     }
@@ -153,6 +165,7 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
     private fun setupListeners() {
         configSectionHeader.setOnClickListener { toggleConfigSection() }
         performanceMonitorHeader.setOnClickListener { togglePerformanceMonitor() }
+        switchSoftwareDecode.setOnCheckedChangeListener { _, _ -> updateRendererOptions() }
         btnPlay.setOnClickListener { ensurePlayerAndPlay() }
         btnStop.setOnClickListener { stopPlayer() }
         btnRecord.setOnClickListener { toggleRecording() }
@@ -230,14 +243,12 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
     }
 
     private fun buildStreamConfig(url: String): StreamConfig {
-        return StreamConfig.Builder(url)
-            .useSoftwareDecode(switchSoftwareDecode.isChecked)
+        val builder = StreamConfig.Builder(url)
             .audioEnabled(switchAudioEnabled.isChecked)
             .rtspTransport(selectedTransportProtocol())
             .bufferSize(parseInt(etBufferSize, defaultValue = 4096))
             .timeout(parseInt(etTimeout, defaultValue = 10_000))
             .enableFastSeek(switchFastSeek.isChecked)
-            .rendererType(selectedRendererType())
             .latencyMode(selectedLatencyMode())
             .clockPolicy(selectedClockPolicy())
             .audioInitBufferMs(parseInt(etAudioInitBufferMs, defaultValue = 200))
@@ -246,7 +257,18 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
             .recoveryIntervalMs(parseInt(etRecoveryIntervalMs, defaultValue = 300))
             .recoveryNoPacketTimeoutMs(parseInt(etRecoveryNoPacketTimeoutMs, defaultValue = 1500))
             .recoveryConnectTimeoutMs(parseInt(etRecoveryConnectTimeoutMs, defaultValue = 3000))
-            .build()
+
+        if (switchSoftwareDecode.isChecked) {
+            builder
+                .decodeMode(StreamConfig.DecodeMode.SOFTWARE)
+                .softwareRenderMode(selectedSoftwareRenderMode())
+        } else {
+            builder
+                .decodeMode(StreamConfig.DecodeMode.HARDWARE)
+                .hardwareRenderMode(selectedHardwareRenderMode())
+        }
+
+        return builder.build()
     }
 
     private fun selectedTransportProtocol(): StreamConfig.TransportProtocol {
@@ -258,11 +280,40 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
         }
     }
 
-    private fun selectedRendererType(): StreamConfig.RendererType {
+    private fun selectedHardwareRenderMode(): StreamConfig.HardwareRenderMode {
         return when (rgRendererType.checkedRadioButtonId) {
-            R.id.rb_renderer_software -> StreamConfig.RendererType.SOFTWARE
-            R.id.rb_renderer_opengl -> StreamConfig.RendererType.OPENGL
-            else -> StreamConfig.RendererType.AUTO
+            R.id.rb_renderer_hw_opengl_texture -> StreamConfig.HardwareRenderMode.OPENGL_TEXTURE
+            R.id.rb_renderer_hw_cpu_frame_opengl -> StreamConfig.HardwareRenderMode.CPU_FRAME_OPENGL
+            else -> StreamConfig.HardwareRenderMode.SURFACE_DIRECT
+        }
+    }
+
+    private fun selectedSoftwareRenderMode(): StreamConfig.SoftwareRenderMode {
+        return when (rgRendererType.checkedRadioButtonId) {
+            R.id.rb_renderer_sw_surface -> StreamConfig.SoftwareRenderMode.SURFACE
+            else -> StreamConfig.SoftwareRenderMode.OPENGL
+        }
+    }
+
+    private fun updateRendererOptions() {
+        val softwareDecode = switchSoftwareDecode.isChecked
+
+        rbRendererHwSurfaceDirect.visibility = if (softwareDecode) View.GONE else View.VISIBLE
+        rbRendererHwOpenGlTexture.visibility = if (softwareDecode) View.GONE else View.VISIBLE
+        rbRendererHwCpuFrameOpenGl.visibility = if (softwareDecode) View.GONE else View.VISIBLE
+        rbRendererSwOpenGl.visibility = if (softwareDecode) View.VISIBLE else View.GONE
+        rbRendererSwSurface.visibility = if (softwareDecode) View.VISIBLE else View.GONE
+
+        val checkedId = rgRendererType.checkedRadioButtonId
+        val validForHardware = checkedId == R.id.rb_renderer_hw_surface_direct ||
+            checkedId == R.id.rb_renderer_hw_opengl_texture ||
+            checkedId == R.id.rb_renderer_hw_cpu_frame_opengl
+        val validForSoftware = checkedId == R.id.rb_renderer_sw_opengl ||
+            checkedId == R.id.rb_renderer_sw_surface
+
+        when {
+            softwareDecode && !validForSoftware -> rgRendererType.check(R.id.rb_renderer_sw_opengl)
+            !softwareDecode && !validForHardware -> rgRendererType.check(R.id.rb_renderer_hw_surface_direct)
         }
     }
 

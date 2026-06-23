@@ -197,8 +197,7 @@ class HeadlessAnalysisActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
     private fun createHeadlessPlayer(url: String) {
         val config = StreamConfig.Builder(url)
             .analysisOnly(true)
-            .rendererType(StreamConfig.RendererType.NONE)
-            .useSoftwareDecode(true)
+            .decodeMode(StreamConfig.DecodeMode.SOFTWARE)
             .audioEnabled(false)
             .build()
 

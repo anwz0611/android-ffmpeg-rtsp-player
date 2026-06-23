@@ -156,7 +156,7 @@ class TransformTestActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
             this,
             videoSurface,
             StreamConfig.Builder(url)
-                .useSoftwareDecode(true)
+                .decodeMode(StreamConfig.DecodeMode.SOFTWARE)
                 .audioEnabled(false)
                 .build()
         )

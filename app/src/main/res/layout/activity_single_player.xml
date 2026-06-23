@@ -423,7 +423,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
-                    android:text="渲染器"
+                    android:text="渲染模式"
                     android:textColor="#101828"
                     android:textSize="15sp"
                     android:textStyle="bold" />
@@ -432,7 +432,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
-                    android:text="自动模式会根据设备能力选择渲染方式。"
+                    android:text="硬解有 3 种渲染方式，软解有 2 种。切换软解开关时，会显示对应可选项。"
                     android:textColor="#667085"
                     android:textSize="12sp" />
 
@@ -441,26 +441,40 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:checkedButton="@id/rb_renderer_auto"
+                    android:checkedButton="@id/rb_renderer_hw_surface_direct"
                     android:orientation="vertical">
 
                     <RadioButton
-                        android:id="@+id/rb_renderer_auto"
+                        android:id="@+id/rb_renderer_hw_surface_direct"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="自动" />
+                        android:text="硬解 / SURFACE_DIRECT：直出 Surface，开销最低" />
 
                     <RadioButton
-                        android:id="@+id/rb_renderer_software"
+                        android:id="@+id/rb_renderer_hw_opengl_texture"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="软件渲染：兼容性优先" />
+                        android:text="硬解 / OPENGL_TEXTURE：纹理渲染，适合低延迟预览" />
 
                     <RadioButton
-                        android:id="@+id/rb_renderer_opengl"
+                        android:id="@+id/rb_renderer_hw_cpu_frame_opengl"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="OpenGL：性能优先" />
+                        android:text="硬解 / CPU_FRAME_OPENGL：CPU 帧转 OpenGL，偏兼容调试" />
+
+                    <RadioButton
+                        android:id="@+id/rb_renderer_sw_opengl"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="软解 / OPENGL：软解后走 OpenGL 渲染"
+                        android:visibility="gone" />
+
+                    <RadioButton
+                        android:id="@+id/rb_renderer_sw_surface"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="软解 / SURFACE：软解后走软件渲染输出"
+                        android:visibility="gone" />
                 </RadioGroup>
 
                 <TextView
