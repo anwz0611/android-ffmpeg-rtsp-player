@@ -179,7 +179,7 @@ class MultiPlayerActivity : BaseInsetsActivity() {
             tvStreamUrl?.text = url
             surfaceView?.holder?.addCallback(this)
 
-            btnPlayStream?.setOnClickListener { ensurePlayer(); play() }
+            btnPlayStream?.setOnClickListener { play() }
             btnStopStream?.setOnClickListener { stop() }
             btnRecordStream?.setOnClickListener { toggleRecording() }
             btnTakePhoto?.setOnClickListener { takePhoto() }
@@ -192,7 +192,7 @@ class MultiPlayerActivity : BaseInsetsActivity() {
         private fun ensurePlayer(): StreamPlayer {
             player?.let { return it }
             val surface = surfaceView ?: error("surfaceView not bound")
-            val createdPlayer = StreamPlayer.playWithConfig(
+            val createdPlayer = StreamPlayer.prepare(
                 this@MultiPlayerActivity,
                 surface,
                 buildConfig(url)
