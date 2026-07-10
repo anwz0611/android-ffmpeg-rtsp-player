@@ -1,0 +1,400 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/rootScrollView"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/black">
+
+    <FrameLayout
+        android:id="@+id/contentContainer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <FrameLayout
+            android:id="@+id/previewSection"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@android:color/black">
+
+            <FrameLayout
+                android:id="@+id/previewSurfaceContainer"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@android:color/black">
+
+                <SurfaceView
+                    android:id="@+id/surface_view"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent" />
+            </FrameLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="top"
+                android:gravity="end"
+                android:orientation="horizontal"
+                android:padding="16dp">
+
+                <Button
+                    android:id="@+id/btn_toggle_orientation"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="切到竖屏" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom"
+                android:background="#66000000"
+                android:orientation="vertical"
+                android:padding="12dp">
+
+                <TextView
+                    android:id="@+id/tv_status"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="状态: 未开始播放"
+                    android:textColor="@android:color/white"
+                    android:textSize="13sp" />
+
+                <TextView
+                    android:id="@+id/tv_live_metrics"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:lineSpacingExtra="2dp"
+                    android:text="首帧耗时、在线时长、FPS、解码方式会在播放后实时显示。"
+                    android:textColor="@android:color/white"
+                    android:textSize="12sp" />
+
+                <TextView
+                    android:id="@+id/tv_stream_info"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="流信息: 无"
+                    android:textColor="@android:color/white"
+                    android:textSize="12sp" />
+
+                <TextView
+                    android:id="@+id/tv_record_info"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="录制状态: 未录制"
+                    android:textColor="@android:color/white"
+                    android:textSize="12sp" />
+            </LinearLayout>
+        </FrameLayout>
+
+        <LinearLayout
+            android:layout_width="1dp"
+            android:layout_height="1dp"
+            android:alpha="0"
+            android:importantForAccessibility="no"
+            android:orientation="vertical">
+
+            <View
+                android:id="@+id/sourceSection"
+                android:layout_width="1dp"
+                android:layout_height="1dp" />
+
+            <View
+                android:id="@+id/configSectionCard"
+                android:layout_width="1dp"
+                android:layout_height="1dp" />
+
+            <View
+                android:id="@+id/statusInfoSection"
+                android:layout_width="1dp"
+                android:layout_height="1dp" />
+
+            <EditText
+                android:id="@+id/et_rtsp_url"
+                android:layout_width="1dp"
+                android:layout_height="1dp"
+                android:inputType="textUri" />
+
+            <Button
+                android:id="@+id/btn_play"
+                android:layout_width="1dp"
+                android:layout_height="1dp"
+                android:text="播放" />
+
+            <Button
+                android:id="@+id/btn_stop"
+                android:layout_width="1dp"
+                android:layout_height="1dp"
+                android:text="停止" />
+
+            <Button
+                android:id="@+id/btn_record"
+                android:layout_width="1dp"
+                android:layout_height="1dp"
+                android:text="开始录制" />
+
+            <Button
+                android:id="@+id/btn_destroy"
+                android:layout_width="1dp"
+                android:layout_height="1dp"
+                android:text="销毁播放器" />
+
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/switch_rtsp_keep_alive"
+                android:layout_width="1dp"
+                android:layout_height="1dp"
+                android:checked="true" />
+
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/switch_software_decode"
+                android:layout_width="1dp"
+                android:layout_height="1dp" />
+
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/switch_audio_enabled"
+                android:layout_width="1dp"
+                android:layout_height="1dp"
+                android:checked="true" />
+
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/switch_fast_seek"
+                android:layout_width="1dp"
+                android:layout_height="1dp"
+                android:checked="true" />
+
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/switch_recovery_enabled"
+                android:layout_width="1dp"
+                android:layout_height="1dp"
+                android:checked="true" />
+
+            <RadioGroup
+                android:id="@+id/rg_transport_protocol"
+                android:layout_width="1dp"
+                android:layout_height="1dp"
+                android:checkedButton="@id/rb_transport_auto">
+
+                <RadioButton
+                    android:id="@+id/rb_transport_auto"
+                    android:layout_width="1dp"
+                    android:layout_height="1dp" />
+
+                <RadioButton
+                    android:id="@+id/rb_transport_tcp"
+                    android:layout_width="1dp"
+                    android:layout_height="1dp" />
+
+                <RadioButton
+                    android:id="@+id/rb_transport_udp"
+                    android:layout_width="1dp"
+                    android:layout_height="1dp" />
+
+                <RadioButton
+                    android:id="@+id/rb_transport_multicast"
+                    android:layout_width="1dp"
+                    android:layout_height="1dp" />
+            </RadioGroup>
+
+            <RadioGroup
+                android:id="@+id/rg_renderer_type"
+                android:layout_width="1dp"
+                android:layout_height="1dp"
+                android:checkedButton="@id/rb_renderer_hw_surface_direct">
+
+                <RadioButton
+                    android:id="@+id/rb_renderer_hw_surface_direct"
+                    android:layout_width="1dp"
+                    android:layout_height="1dp" />
+
+                <RadioButton
+                    android:id="@+id/rb_renderer_hw_opengl_texture"
+                    android:layout_width="1dp"
+                    android:layout_height="1dp" />
+
+                <RadioButton
+                    android:id="@+id/rb_renderer_hw_cpu_frame_opengl"
+                    android:layout_width="1dp"
+                    android:layout_height="1dp" />
+
+                <RadioButton
+                    android:id="@+id/rb_renderer_sw_opengl"
+                    android:layout_width="1dp"
+                    android:layout_height="1dp" />
+
+                <RadioButton
+                    android:id="@+id/rb_renderer_sw_surface"
+                    android:layout_width="1dp"
+                    android:layout_height="1dp" />
+            </RadioGroup>
+
+            <RadioGroup
+                android:id="@+id/rg_latency_mode"
+                android:layout_width="1dp"
+                android:layout_height="1dp"
+                android:checkedButton="@id/rb_latency_ultra_low">
+
+                <RadioButton
+                    android:id="@+id/rb_latency_balanced"
+                    android:layout_width="1dp"
+                    android:layout_height="1dp" />
+
+                <RadioButton
+                    android:id="@+id/rb_latency_ultra_low"
+                    android:layout_width="1dp"
+                    android:layout_height="1dp" />
+            </RadioGroup>
+
+            <RadioGroup
+                android:id="@+id/rg_clock_policy"
+                android:layout_width="1dp"
+                android:layout_height="1dp"
+                android:checkedButton="@id/rb_clock_auto">
+
+                <RadioButton
+                    android:id="@+id/rb_clock_auto"
+                    android:layout_width="1dp"
+                    android:layout_height="1dp" />
+
+                <RadioButton
+                    android:id="@+id/rb_clock_audio_master"
+                    android:layout_width="1dp"
+                    android:layout_height="1dp" />
+
+                <RadioButton
+                    android:id="@+id/rb_clock_video_master"
+                    android:layout_width="1dp"
+                    android:layout_height="1dp" />
+            </RadioGroup>
+
+            <EditText
+                android:id="@+id/et_buffer_size"
+                android:layout_width="1dp"
+                android:layout_height="1dp"
+                android:inputType="number"
+                android:text="4096" />
+
+            <EditText
+                android:id="@+id/et_timeout"
+                android:layout_width="1dp"
+                android:layout_height="1dp"
+                android:inputType="number"
+                android:text="10000" />
+
+            <EditText
+                android:id="@+id/et_audio_init_buffer_ms"
+                android:layout_width="1dp"
+                android:layout_height="1dp"
+                android:inputType="number"
+                android:text="200" />
+
+            <EditText
+                android:id="@+id/et_rtsp_keep_alive_interval"
+                android:layout_width="1dp"
+                android:layout_height="1dp"
+                android:inputType="number"
+                android:text="30" />
+
+            <EditText
+                android:id="@+id/et_proxy_url"
+                android:layout_width="1dp"
+                android:layout_height="1dp"
+                android:inputType="textUri" />
+
+            <EditText
+                android:id="@+id/et_proxy_username"
+                android:layout_width="1dp"
+                android:layout_height="1dp" />
+
+            <EditText
+                android:id="@+id/et_proxy_password"
+                android:layout_width="1dp"
+                android:layout_height="1dp"
+                android:inputType="textPassword" />
+
+            <EditText
+                android:id="@+id/et_recovery_max_attempts"
+                android:layout_width="1dp"
+                android:layout_height="1dp"
+                android:inputType="number"
+                android:text="3" />
+
+            <EditText
+                android:id="@+id/et_recovery_interval_ms"
+                android:layout_width="1dp"
+                android:layout_height="1dp"
+                android:inputType="number"
+                android:text="300" />
+
+            <EditText
+                android:id="@+id/et_recovery_no_packet_timeout_ms"
+                android:layout_width="1dp"
+                android:layout_height="1dp"
+                android:inputType="number"
+                android:text="1500" />
+
+            <EditText
+                android:id="@+id/et_recovery_connect_timeout_ms"
+                android:layout_width="1dp"
+                android:layout_height="1dp"
+                android:inputType="number"
+                android:text="3000" />
+
+            <LinearLayout
+                android:id="@+id/configSectionHeader"
+                android:layout_width="1dp"
+                android:layout_height="1dp" />
+
+            <TextView
+                android:id="@+id/configSectionToggle"
+                android:layout_width="1dp"
+                android:layout_height="1dp"
+                android:text="展开" />
+
+            <LinearLayout
+                android:id="@+id/configSectionContent"
+                android:layout_width="1dp"
+                android:layout_height="1dp" />
+
+            <androidx.cardview.widget.CardView
+                android:id="@+id/performanceMonitorCard"
+                android:layout_width="1dp"
+                android:layout_height="1dp"
+                android:visibility="gone"
+                app:cardCornerRadius="8dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical">
+
+                    <View
+                        android:id="@+id/performanceMonitorHeader"
+                        android:layout_width="1dp"
+                        android:layout_height="1dp" />
+
+                    <TextView
+                        android:id="@+id/performanceMonitorToggle"
+                        android:layout_width="1dp"
+                        android:layout_height="1dp"
+                        android:text="▼" />
+
+                    <ScrollView
+                        android:id="@+id/performanceMonitorContent"
+                        android:layout_width="1dp"
+                        android:layout_height="1dp"
+                        android:visibility="gone">
+
+                        <TextView
+                            android:id="@+id/performanceMonitorTextView"
+                            android:layout_width="1dp"
+                            android:layout_height="1dp"
+                            android:text="性能监控数据..." />
+                    </ScrollView>
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+        </LinearLayout>
+    </FrameLayout>
+</FrameLayout>

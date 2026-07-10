@@ -1,106 +1,181 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="#F5F7FA"
     android:clipToPadding="false"
-    android:orientation="vertical">
+    android:fillViewport="true">
 
-    <!-- 顶部控制栏 -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="8dp"
-        android:background="#f0f0f0">
-
-        <EditText
-            android:id="@+id/et_rtsp_url"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:hint="输入RTSP地址"
-            android:text="rtsp://stream.strba.sk:1935/strba/VYHLAD_JAZERO.stream"
-            android:padding="8dp" />
-
-        <Button
-            android:id="@+id/btn_add_stream"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="添加流"
-            android:layout_marginStart="8dp" />
-
-    </LinearLayout>
-
-    <!-- 多流显示区域 -->
-    <ScrollView
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:clipToPadding="false">
-
-        <LinearLayout
-            android:id="@+id/ll_streams_container"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="8dp">
-
-            <!-- 流项目将通过代码动态添加 -->
-
-        </LinearLayout>
-
-    </ScrollView>
-
-    <!-- 底部控制栏 -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="8dp"
-        android:background="#f0f0f0">
-
-        <Button
-            android:id="@+id/btn_play_all"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="播放全部"
-            android:layout_marginEnd="4dp" />
-
-        <Button
-            android:id="@+id/btn_stop_all"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="停止全部"
-            android:layout_marginStart="4dp"
-            android:layout_marginEnd="4dp" />
-
-        <Button
-            android:id="@+id/btn_clear_all"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="清空全部"
-            android:layout_marginStart="4dp" />
-
-    </LinearLayout>
-
-    <!-- 状态信息 -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="8dp"
-        android:background="#e0e0e0">
+        android:padding="12dp">
 
-        <TextView
-            android:id="@+id/tv_stream_count"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="活跃流数量: 0"
-            android:textSize="12sp" />
+            android:background="#FFFFFF"
+            android:orientation="vertical"
+            android:padding="16dp">
 
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="多路并发演示"
+                android:textColor="#101828"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="支持单地址快速添加，也支持一行一个地址批量输入。预设 4/9/16 会按地址列表依次铺成宫格。"
+                android:textColor="#667085"
+                android:textSize="13sp" />
+
+            <EditText
+                android:id="@+id/et_rtsp_url"
+                android:layout_width="match_parent"
+                android:layout_height="120dp"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/multi_url_input_bg"
+                android:gravity="top|start"
+                android:hint="每行一个 RTSP 地址，可输入不同流地址"
+                android:inputType="textUri|textMultiLine"
+                android:padding="12dp"
+                android:scrollbars="vertical"
+                android:text="rtsp://stream.strba.sk:1935/strba/VYHLAD_JAZERO.stream"
+                android:textColor="#101828"
+                android:textColorHint="#98A2B3" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="预设路数"
+                    android:textColor="#344054"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+
+                <Button
+                    android:id="@+id/btn_preset_4"
+                    android:layout_width="0dp"
+                    android:layout_height="40dp"
+                    android:layout_marginStart="12dp"
+                    android:layout_weight="1"
+                    android:text="4 路" />
+
+                <Button
+                    android:id="@+id/btn_preset_9"
+                    android:layout_width="0dp"
+                    android:layout_height="40dp"
+                    android:layout_marginStart="8dp"
+                    android:layout_weight="1"
+                    android:text="9 路" />
+
+                <Button
+                    android:id="@+id/btn_preset_16"
+                    android:layout_width="0dp"
+                    android:layout_height="40dp"
+                    android:layout_marginStart="8dp"
+                    android:layout_weight="1"
+                    android:text="16 路" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/btn_add_stream"
+                    android:layout_width="0dp"
+                    android:layout_height="44dp"
+                    android:layout_marginEnd="6dp"
+                    android:layout_weight="1"
+                    android:text="添加一路" />
+
+                <Button
+                    android:id="@+id/btn_play_all"
+                    android:layout_width="0dp"
+                    android:layout_height="44dp"
+                    android:layout_marginStart="6dp"
+                    android:layout_marginEnd="6dp"
+                    android:layout_weight="1"
+                    android:text="全部播放" />
+
+                <Button
+                    android:id="@+id/btn_stop_all"
+                    android:layout_width="0dp"
+                    android:layout_height="44dp"
+                    android:layout_marginStart="6dp"
+                    android:layout_marginEnd="6dp"
+                    android:layout_weight="1"
+                    android:text="全部停止" />
+
+                <Button
+                    android:id="@+id/btn_clear_all"
+                    android:layout_width="0dp"
+                    android:layout_height="44dp"
+                    android:layout_marginStart="6dp"
+                    android:layout_weight="1"
+                    android:text="清空" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:background="#FFFFFF"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="总体指标"
+                android:textColor="#101828"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tv_stream_count"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="活跃播放器: 0 / 0"
+                android:textColor="#344054"
+                android:textSize="13sp" />
+
+            <TextView
+                android:id="@+id/tv_grid_summary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="首帧耗时、在线时长、播放稳定性会在这里汇总。"
+                android:textColor="#344054"
+                android:textSize="13sp" />
+        </LinearLayout>
+
+        <GridLayout
+            android:id="@+id/grid_streams_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:alignmentMode="alignMargins"
+            android:columnCount="2"
+            android:orientation="horizontal"
+            android:rowOrderPreserved="false"
+            android:useDefaultMargins="false" />
     </LinearLayout>
-
-</LinearLayout>
+</ScrollView>

@@ -32,6 +32,7 @@
         <activity
             android:name=".SinglePlayerActivity"
             android:exported="false"
+            android:configChanges="orientation|screenSize|keyboardHidden"
             android:screenOrientation="portrait" />
         <activity
             android:name=".MultiPlayerActivity"

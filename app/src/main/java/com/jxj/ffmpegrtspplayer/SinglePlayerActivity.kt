@@ -1,14 +1,18 @@
 package com.jxj.ffmpegrtspplayer
 
+import android.content.pm.ActivityInfo
+import android.content.res.Configuration
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import android.widget.EditText
+import android.widget.LinearLayout
 import android.widget.RadioGroup
 import android.view.SurfaceHolder
 import android.view.SurfaceView
 import android.view.View
+import android.view.WindowManager
 import android.widget.Button
 import android.widget.RadioButton
 import android.widget.TextView
@@ -20,6 +24,7 @@ import com.jxj.ffmpegrtsp.lib.api.StreamErrorCode
 import com.jxj.ffmpegrtsp.lib.api.StreamPlayer
 import com.jxj.ffmpegrtsp.lib.api.StreamStateCode
 import com.jxj.ffmpegrtsp.lib.api.VideoInfo
+import com.jxj.ffmpegrtsp.lib.transform.VideoTransformManager
 import com.google.android.material.switchmaterial.SwitchMaterial
 import java.io.File
 import java.text.SimpleDateFormat
@@ -40,17 +45,52 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
     companion object {
         private const val TAG = "SinglePlayerActivity"
         private const val UPDATE_INTERVAL_MS = 500L
+        private const val DEFAULT_RTSP_URL = "rtsp://192.168.144.130:554"
     }
 
+    private data class UiFormState(
+        val rtspUrl: String,
+        val rtspKeepAliveEnabled: Boolean,
+        val softwareDecode: Boolean,
+        val audioEnabled: Boolean,
+        val fastSeek: Boolean,
+        val recoveryEnabled: Boolean,
+        val transportCheckedId: Int,
+        val rendererCheckedId: Int,
+        val latencyCheckedId: Int,
+        val clockCheckedId: Int,
+        val bufferSize: String,
+        val timeout: String,
+        val audioInitBufferMs: String,
+        val rtspKeepAliveInterval: String,
+        val proxyUrl: String,
+        val proxyUsername: String,
+        val proxyPassword: String,
+        val recoveryMaxAttempts: String,
+        val recoveryIntervalMs: String,
+        val recoveryNoPacketTimeoutMs: String,
+        val recoveryConnectTimeoutMs: String
+    )
+
     private lateinit var etRtspUrl: EditText
+    private lateinit var rootScrollView: View
+    private lateinit var contentContainer: View
+    private lateinit var sourceSection: View
+    private lateinit var previewSection: View
+    private lateinit var previewSurfaceContainer: View
+    private lateinit var configSectionCard: View
+    private lateinit var statusInfoSection: View
     private lateinit var btnPlay: Button
     private lateinit var btnStop: Button
     private lateinit var btnRecord: Button
     private lateinit var btnDestroy: Button
+    private lateinit var btnToggleOrientation: Button
     private lateinit var surfaceView: SurfaceView
     private lateinit var tvStatus: TextView
+    private lateinit var tvLiveMetrics: TextView
     private lateinit var tvStreamInfo: TextView
     private lateinit var tvRecordInfo: TextView
+    private lateinit var switchRtspKeepAlive: SwitchMaterial
     private lateinit var switchSoftwareDecode: SwitchMaterial
     private lateinit var switchAudioEnabled: SwitchMaterial
     private lateinit var switchFastSeek: SwitchMaterial
@@ -67,6 +107,10 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
     private lateinit var etBufferSize: EditText
     private lateinit var etTimeout: EditText
     private lateinit var etAudioInitBufferMs: EditText
+    private lateinit var etRtspKeepAliveInterval: EditText
+    private lateinit var etProxyUrl: EditText
+    private lateinit var etProxyUsername: EditText
+    private lateinit var etProxyPassword: EditText
     private lateinit var etRecoveryMaxAttempts: EditText
     private lateinit var etRecoveryIntervalMs: EditText
     private lateinit var etRecoveryNoPacketTimeoutMs: EditText
@@ -89,11 +133,17 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
     private var pendingRecordingDisplayName: String? = null
     private var requestedRecordingFile: File? = null
     private var isPlaybackRequested = false
+    private var playbackRequestedAtMs = 0L
+    private var playbackStartedAtMs = 0L
+    private var firstFrameCostMs: Long? = null
+    private var playbackErrorCount = 0
+    private var lastErrorSummary: String? = null
     private var isConfigSectionExpanded = false
     private var isPerformanceMonitorExpanded = false
     private var isPerformanceMonitoring = false
     private var monitoringStartTime = 0L
     private var totalUpdates = 0L
+    private var pendingUiFormState: UiFormState? = null
 
     private val performanceMonitorHandler = Handler(Looper.getMainLooper())
     private val performanceMonitorRunnable = object : Runnable {
@@ -108,24 +158,29 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_single_player)
-        applyEdgeToEdge(findViewById(android.R.id.content), top = true, bottom = true)
-
-        initViews()
-        setupListeners()
-        updateUI()
+        rebindLayoutForCurrentConfiguration(restoreFormState = false)
     }
 
     private fun initViews() {
+        rootScrollView = findViewById(R.id.rootScrollView)
+        contentContainer = findViewById(R.id.contentContainer)
+        sourceSection = findViewById(R.id.sourceSection)
+        previewSection = findViewById(R.id.previewSection)
+        previewSurfaceContainer = findViewById(R.id.previewSurfaceContainer)
+        configSectionCard = findViewById(R.id.configSectionCard)
+        statusInfoSection = findViewById(R.id.statusInfoSection)
         etRtspUrl = findViewById(R.id.et_rtsp_url)
         btnPlay = findViewById(R.id.btn_play)
         btnStop = findViewById(R.id.btn_stop)
         btnRecord = findViewById(R.id.btn_record)
         btnDestroy = findViewById(R.id.btn_destroy)
+        btnToggleOrientation = findViewById(R.id.btn_toggle_orientation)
         surfaceView = findViewById(R.id.surface_view)
         tvStatus = findViewById(R.id.tv_status)
+        tvLiveMetrics = findViewById(R.id.tv_live_metrics)
         tvStreamInfo = findViewById(R.id.tv_stream_info)
         tvRecordInfo = findViewById(R.id.tv_record_info)
+        switchRtspKeepAlive = findViewById(R.id.switch_rtsp_keep_alive)
         switchSoftwareDecode = findViewById(R.id.switch_software_decode)
         switchAudioEnabled = findViewById(R.id.switch_audio_enabled)
         switchFastSeek = findViewById(R.id.switch_fast_seek)
@@ -142,6 +197,10 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
         etBufferSize = findViewById(R.id.et_buffer_size)
         etTimeout = findViewById(R.id.et_timeout)
         etAudioInitBufferMs = findViewById(R.id.et_audio_init_buffer_ms)
+        etRtspKeepAliveInterval = findViewById(R.id.et_rtsp_keep_alive_interval)
+        etProxyUrl = findViewById(R.id.et_proxy_url)
+        etProxyUsername = findViewById(R.id.et_proxy_username)
+        etProxyPassword = findViewById(R.id.et_proxy_password)
         etRecoveryMaxAttempts = findViewById(R.id.et_recovery_max_attempts)
         etRecoveryIntervalMs = findViewById(R.id.et_recovery_interval_ms)
         etRecoveryNoPacketTimeoutMs = findViewById(R.id.et_recovery_no_packet_timeout_ms)
@@ -156,9 +215,9 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
         performanceMonitorContent = findViewById(R.id.performanceMonitorContent)
         performanceMonitorTextView = findViewById(R.id.performanceMonitorTextView)
 
+        restoreUiFormState(pendingUiFormState ?: defaultUiFormState())
         updateConfigSectionVisibility()
         updateRendererOptions()
-        etRtspUrl.setText("rtsp://192.168.144.130:554")
         surfaceView.holder.addCallback(this)
     }
 
@@ -170,6 +229,7 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
         btnStop.setOnClickListener { stopPlayer() }
         btnRecord.setOnClickListener { toggleRecording() }
         btnDestroy.setOnClickListener { releasePlayer() }
+        btnToggleOrientation.setOnClickListener { toggleOrientation() }
     }
 
     private fun ensurePlayerAndPlay() {
@@ -182,6 +242,10 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
         val currentPlayer = player
         if (currentPlayer != null && !currentPlayer.isReleased()) {
             isPlaybackRequested = true
+            playbackRequestedAtMs = System.currentTimeMillis()
+            playbackStartedAtMs = 0L
+            firstFrameCostMs = null
+            lastErrorSummary = null
             currentPlayer.play()
             refreshStateFromPlayer()
             return
@@ -190,6 +254,11 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
         val config = buildStreamConfig(url)
 
         isPlaybackRequested = true
+        playbackRequestedAtMs = System.currentTimeMillis()
+        playbackStartedAtMs = 0L
+        firstFrameCostMs = null
+        playbackErrorCount = 0
+        lastErrorSummary = null
         player = StreamPlayer.playWithConfig(this, surfaceView, config)
             .setOnStateChanged { state ->
                 Log.i(TAG, "state=${state.streamStateCode}")
@@ -198,6 +267,10 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
             .setOnPlaybackStarted { videoInfo ->
                 runOnUiThread {
                     isPlaybackRequested = true
+                    playbackStartedAtMs = System.currentTimeMillis()
+                    if (playbackRequestedAtMs > 0L && firstFrameCostMs == null) {
+                        firstFrameCostMs = playbackStartedAtMs - playbackRequestedAtMs
+                    }
                     currentVideoInfo = videoInfo
                     refreshStateFromPlayer()
                     Log.i(TAG, "playback started: $videoInfo")
@@ -209,6 +282,7 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
             .setOnPlaybackStopped {
                 runOnUiThread {
                     isPlaybackRequested = false
+                    playbackRequestedAtMs = 0L
                     refreshStateFromPlayer()
                     Log.i(TAG, "playback stopped")
                     stopPerformanceMonitoring()
@@ -231,6 +305,8 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
             .setOnError { errorCode, errorMessage ->
                 runOnUiThread {
                     isPlaybackRequested = false
+                    playbackErrorCount += 1
+                    lastErrorSummary = "$errorCode / $errorMessage"
                     refreshStateFromPlayer()
                     Log.e(TAG, "player error: code=$errorCode, message=$errorMessage")
                     showToast("播放器错误: $errorMessage")
@@ -246,17 +322,29 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
         val builder = StreamConfig.Builder(url)
             .audioEnabled(switchAudioEnabled.isChecked)
             .rtspTransport(selectedTransportProtocol())
-            .bufferSize(parseInt(etBufferSize, defaultValue = 4096))
-            .timeout(parseInt(etTimeout, defaultValue = 10_000))
+            .rtspKeepAliveEnabled(switchRtspKeepAlive.isChecked)
+            .rtspKeepAliveInterval(parsePositiveInt(etRtspKeepAliveInterval, defaultValue = 30))
+            .bufferSize(parsePositiveInt(etBufferSize, defaultValue = 4096))
+            .timeout(parsePositiveInt(etTimeout, defaultValue = 10_000))
             .enableFastSeek(switchFastSeek.isChecked)
             .latencyMode(selectedLatencyMode())
             .clockPolicy(selectedClockPolicy())
-            .audioInitBufferMs(parseInt(etAudioInitBufferMs, defaultValue = 200))
+            .audioInitBufferMs(parseBoundedInt(etAudioInitBufferMs, defaultValue = 200, minValue = 20, maxValue = 1000))
             .recoveryEnabled(switchRecoveryEnabled.isChecked)
-            .recoveryMaxAttempts(parseInt(etRecoveryMaxAttempts, defaultValue = 3))
-            .recoveryIntervalMs(parseInt(etRecoveryIntervalMs, defaultValue = 300))
-            .recoveryNoPacketTimeoutMs(parseInt(etRecoveryNoPacketTimeoutMs, defaultValue = 1500))
-            .recoveryConnectTimeoutMs(parseInt(etRecoveryConnectTimeoutMs, defaultValue = 3000))
+            .recoveryMaxAttempts(parsePositiveInt(etRecoveryMaxAttempts, defaultValue = 3))
+            .recoveryIntervalMs(parsePositiveInt(etRecoveryIntervalMs, defaultValue = 300))
+            .recoveryNoPacketTimeoutMs(parsePositiveInt(etRecoveryNoPacketTimeoutMs, defaultValue = 1500))
+            .recoveryConnectTimeoutMs(parsePositiveInt(etRecoveryConnectTimeoutMs, defaultValue = 3000))
+
+        etProxyUrl.text?.toString()?.trim()?.takeIf { it.isNotEmpty() }?.let {
+            builder.proxyUrl(it)
+        }
+        etProxyUsername.text?.toString()?.trim()?.takeIf { it.isNotEmpty() }?.let {
+            builder.proxyUsername(it)
+        }
+        etProxyPassword.text?.toString()?.trim()?.takeIf { it.isNotEmpty() }?.let {
+            builder.proxyPassword(it)
+        }
 
         if (switchSoftwareDecode.isChecked) {
             builder
@@ -332,25 +420,40 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
         }
     }
 
-    private fun parseInt(editText: EditText, defaultValue: Int): Int {
+    private fun parsePositiveInt(editText: EditText, defaultValue: Int): Int {
         val rawValue = editText.text.toString().trim()
         if (rawValue.isEmpty()) {
             editText.setText(defaultValue.toString())
             return defaultValue
         }
-        return rawValue.toIntOrNull()?.also {
-            if (it < 0) {
-                editText.setText(defaultValue.toString())
-            }
-        }?.takeIf { it >= 0 } ?: run {
+        return rawValue.toIntOrNull()?.takeIf { it > 0 } ?: run {
             editText.setText(defaultValue.toString())
             showToast("${editText.hint} 无效，已恢复默认值 $defaultValue")
             defaultValue
         }
     }
 
+    private fun parseBoundedInt(
+        editText: EditText,
+        defaultValue: Int,
+        minValue: Int,
+        maxValue: Int
+    ): Int {
+        val rawValue = editText.text.toString().trim()
+        if (rawValue.isEmpty()) {
+            editText.setText(defaultValue.toString())
+            return defaultValue
+        }
+        return rawValue.toIntOrNull()?.takeIf { it in minValue..maxValue } ?: run {
+            editText.setText(defaultValue.toString())
+            showToast("${editText.hint} 超出范围，已恢复默认值 $defaultValue")
+            defaultValue
+        }
+    }
+
     private fun stopPlayer() {
         isPlaybackRequested = false
+        playbackRequestedAtMs = 0L
         player?.stop()
         stopPerformanceMonitoring()
         refreshStateFromPlayer()
@@ -426,6 +529,11 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
         player = null
         currentState = emptyState()
         isPlaybackRequested = false
+        playbackRequestedAtMs = 0L
+        playbackStartedAtMs = 0L
+        firstFrameCostMs = null
+        playbackErrorCount = 0
+        lastErrorSummary = null
         currentVideoInfo = null
         lastRecordingPath = null
         pendingRecordingFile = null
@@ -496,7 +604,7 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
             val isPlaying = isPlayerEffectivelyPlaying(currentPlayer, state)
             val isRecording = state.isRecording || currentPlayer?.isRecording() == true
             val streamId = if (hasPlayer) state.streamId else -1
-            val shouldShowPerformanceMonitor = hasPlayer && (isPlaying || isPerformanceMonitoring)
+            val shouldShowPerformanceMonitor = hasPlayer && (isPlaying || isPerformanceMonitoring) && !isLandscape()
 
             btnPlay.isEnabled = !isPlaying && !isPending
             btnStop.isEnabled = hasPlayer && isPlaying && !isPending
@@ -519,6 +627,12 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
                 else -> "状态: 已停止"
             }
             tvStatus.text = statusText
+            tvLiveMetrics.text = buildLiveMetricsText(
+                hasPlayer = hasPlayer,
+                isPlaying = isPlaying,
+                isRecording = isRecording,
+                state = state
+            )
 
             val infoBuilder = StringBuilder("统计: 单流模式")
             if (streamId >= 0) {
@@ -544,6 +658,8 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
     }
 
     override fun surfaceCreated(holder: SurfaceHolder) {
+        player?.takeIf { !it.isReleased() }?.attachSurface(surfaceView)
+        applyScaleTypeForCurrentOrientation()
         refreshStateFromPlayer()
     }
 
@@ -556,6 +672,18 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
         refreshStateFromPlayer()
     }
 
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        rebindLayoutForCurrentConfiguration(restoreFormState = true)
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus) {
+            applyWindowMode(resources.configuration)
+        }
+    }
+
     private fun togglePerformanceMonitor() {
         isPerformanceMonitorExpanded = !isPerformanceMonitorExpanded
         performanceMonitorContent.visibility = if (isPerformanceMonitorExpanded) View.VISIBLE else View.GONE
@@ -565,6 +693,87 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
     private fun toggleConfigSection() {
         isConfigSectionExpanded = !isConfigSectionExpanded
         updateConfigSectionVisibility()
+    }
+
+    private fun toggleOrientation() {
+        requestedOrientation = if (isLandscape()) {
+            ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT
+        } else {
+            ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+        }
+    }
+
+    private fun rebindLayoutForCurrentConfiguration(restoreFormState: Boolean) {
+        if (restoreFormState && ::etRtspUrl.isInitialized) {
+            pendingUiFormState = captureUiFormState()
+        } else if (pendingUiFormState == null) {
+            pendingUiFormState = defaultUiFormState()
+        }
+
+        setContentView(R.layout.activity_single_player)
+        val landscape = resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+        initViews()
+        applyEdgeToEdge(rootScrollView, top = !landscape, bottom = !landscape)
+        setupListeners()
+        applyWindowMode(resources.configuration)
+        applyScaleTypeForCurrentOrientation()
+        player?.takeIf { !it.isReleased() }?.let { currentPlayer ->
+            surfaceView.post {
+                if (!currentPlayer.isReleased()) {
+                    currentPlayer.attachSurface(surfaceView)
+                    refreshStateFromPlayer()
+                }
+            }
+        }
+        updateUI()
+    }
+
+    private fun applyWindowMode(configuration: Configuration) {
+        btnToggleOrientation.text = if (configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            "切到竖屏"
+        } else {
+            "切到横屏"
+        }
+        if (configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            supportActionBar?.hide()
+            window.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
+            window.decorView.systemUiVisibility =
+                View.SYSTEM_UI_FLAG_LAYOUT_STABLE or
+                    View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or
+                    View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or
+                    View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or
+                    View.SYSTEM_UI_FLAG_FULLSCREEN or
+                    View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+        } else {
+            supportActionBar?.show()
+            window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
+            window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+        }
+    }
+
+    private fun applyScaleTypeForCurrentOrientation() {
+        val currentPlayer = player ?: return
+        if (currentPlayer.isReleased()) {
+            return
+        }
+        val streamId = currentPlayer.getStreamId()
+        if (streamId < 0) {
+            return
+        }
+        val scaleType = if (isLandscape()) {
+            VideoTransformManager.ScaleType.CENTER_CROP
+        } else {
+            VideoTransformManager.ScaleType.FIT_CENTER
+        }
+        runCatching {
+            VideoTransformManager.setScaleType(streamId, scaleType)
+        }.onFailure {
+            Log.w(TAG, "设置缩放模式失败: streamId=$streamId, scaleType=$scaleType", it)
+        }
+    }
+
+    private fun isLandscape(): Boolean {
+        return resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
     }
 
     private fun updateConfigSectionVisibility() {
@@ -613,6 +822,21 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
                 .append('\n')
         }
 
+        firstFrameCostMs?.let {
+            statsBuilder.append("首帧耗时: ").append(it).append(" ms\n")
+        }
+        if (playbackStartedAtMs > 0L) {
+            statsBuilder.append("连续播放: ")
+                .append(formatDuration(now - playbackStartedAtMs))
+                .append('\n')
+        }
+        statsBuilder.append("解码路径: ").append(selectedDecodeModeLabel()).append('\n')
+        statsBuilder.append("渲染路径: ").append(selectedRenderModeLabel()).append('\n')
+        statsBuilder.append("错误次数: ").append(playbackErrorCount).append('\n')
+        if (!lastErrorSummary.isNullOrBlank()) {
+            statsBuilder.append("最近错误摘要: ").append(lastErrorSummary).append('\n')
+        }
+
         statsBuilder.append('\n')
         statsBuilder.append("当前状态: ").append(snapshot.streamStateCode).append('\n')
         statsBuilder.append("播放中: ").append(snapshot.isPlaying).append('\n')
@@ -649,6 +873,63 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
         performanceMonitorTextView.text = statsBuilder.toString()
     }
 
+    private fun buildLiveMetricsText(
+        hasPlayer: Boolean,
+        isPlaying: Boolean,
+        isRecording: Boolean,
+        state: PlayerStateSnapshot
+    ): String {
+        if (!hasPlayer) {
+            return "首帧耗时、在线时长、FPS、解码方式会在播放后实时显示。"
+        }
+
+        val lines = mutableListOf<String>()
+        val line1 = buildString {
+            firstFrameCostMs?.let {
+                append("首帧 ").append(it).append("ms")
+            } ?: append("首帧待采样")
+            if (playbackStartedAtMs > 0L && (isPlaying || isRecording)) {
+                append(" | 在线 ").append(formatDuration(System.currentTimeMillis() - playbackStartedAtMs))
+            }
+            append(" | 错误 ").append(playbackErrorCount)
+        }
+        lines += line1
+
+        val line2 = buildString {
+            append(selectedDecodeModeLabel())
+            append(" | ").append(selectedRenderModeLabel())
+            currentVideoInfo?.let {
+                append(" | ").append(it.width).append("x").append(it.height)
+                append(" @ ").append(it.fps).append("fps")
+            }
+        }
+        lines += line2
+
+        if (!lastErrorSummary.isNullOrBlank() && state.lastErrorCode != StreamErrorCode.OK) {
+            lines += "最近错误: $lastErrorSummary"
+        }
+        return lines.joinToString("\n")
+    }
+
+    private fun selectedDecodeModeLabel(): String {
+        return if (switchSoftwareDecode.isChecked) "软解码" else "硬解码"
+    }
+
+    private fun selectedRenderModeLabel(): String {
+        return if (switchSoftwareDecode.isChecked) {
+            when (rgRendererType.checkedRadioButtonId) {
+                R.id.rb_renderer_sw_surface -> "Surface 渲染"
+                else -> "OpenGL 渲染"
+            }
+        } else {
+            when (rgRendererType.checkedRadioButtonId) {
+                R.id.rb_renderer_hw_opengl_texture -> "OpenGL Texture"
+                R.id.rb_renderer_hw_cpu_frame_opengl -> "CPU Frame OpenGL"
+                else -> "Surface Direct"
+            }
+        }
+    }
+
     private fun formatDuration(milliseconds: Long): String {
         val seconds = milliseconds / 1000
         val minutes = seconds / 60
@@ -672,6 +953,7 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
 
     override fun onResume() {
         super.onResume()
+        applyWindowMode(resources.configuration)
         refreshStateFromPlayer()
         if (isPlayerEffectivelyPlaying()) {
             startPerformanceMonitoring()
@@ -687,6 +969,83 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
         performanceMonitorHandler.removeCallbacks(performanceMonitorRunnable)
         releasePlayer()
         super.onDestroy()
+    }
+
+    private fun captureUiFormState(): UiFormState {
+        return UiFormState(
+            rtspUrl = etRtspUrl.text?.toString().orEmpty(),
+            rtspKeepAliveEnabled = switchRtspKeepAlive.isChecked,
+            softwareDecode = switchSoftwareDecode.isChecked,
+            audioEnabled = switchAudioEnabled.isChecked,
+            fastSeek = switchFastSeek.isChecked,
+            recoveryEnabled = switchRecoveryEnabled.isChecked,
+            transportCheckedId = rgTransportProtocol.checkedRadioButtonId,
+            rendererCheckedId = rgRendererType.checkedRadioButtonId,
+            latencyCheckedId = rgLatencyMode.checkedRadioButtonId,
+            clockCheckedId = rgClockPolicy.checkedRadioButtonId,
+            bufferSize = etBufferSize.text?.toString().orEmpty(),
+            timeout = etTimeout.text?.toString().orEmpty(),
+            audioInitBufferMs = etAudioInitBufferMs.text?.toString().orEmpty(),
+            rtspKeepAliveInterval = etRtspKeepAliveInterval.text?.toString().orEmpty(),
+            proxyUrl = etProxyUrl.text?.toString().orEmpty(),
+            proxyUsername = etProxyUsername.text?.toString().orEmpty(),
+            proxyPassword = etProxyPassword.text?.toString().orEmpty(),
+            recoveryMaxAttempts = etRecoveryMaxAttempts.text?.toString().orEmpty(),
+            recoveryIntervalMs = etRecoveryIntervalMs.text?.toString().orEmpty(),
+            recoveryNoPacketTimeoutMs = etRecoveryNoPacketTimeoutMs.text?.toString().orEmpty(),
+            recoveryConnectTimeoutMs = etRecoveryConnectTimeoutMs.text?.toString().orEmpty()
+        )
+    }
+
+    private fun restoreUiFormState(state: UiFormState) {
+        etRtspUrl.setText(state.rtspUrl)
+        switchRtspKeepAlive.isChecked = state.rtspKeepAliveEnabled
+        switchSoftwareDecode.isChecked = state.softwareDecode
+        switchAudioEnabled.isChecked = state.audioEnabled
+        switchFastSeek.isChecked = state.fastSeek
+        switchRecoveryEnabled.isChecked = state.recoveryEnabled
+        rgTransportProtocol.check(state.transportCheckedId)
+        rgRendererType.check(state.rendererCheckedId)
+        rgLatencyMode.check(state.latencyCheckedId)
+        rgClockPolicy.check(state.clockCheckedId)
+        etBufferSize.setText(state.bufferSize)
+        etTimeout.setText(state.timeout)
+        etAudioInitBufferMs.setText(state.audioInitBufferMs)
+        etRtspKeepAliveInterval.setText(state.rtspKeepAliveInterval)
+        etProxyUrl.setText(state.proxyUrl)
+        etProxyUsername.setText(state.proxyUsername)
+        etProxyPassword.setText(state.proxyPassword)
+        etRecoveryMaxAttempts.setText(state.recoveryMaxAttempts)
+        etRecoveryIntervalMs.setText(state.recoveryIntervalMs)
+        etRecoveryNoPacketTimeoutMs.setText(state.recoveryNoPacketTimeoutMs)
+        etRecoveryConnectTimeoutMs.setText(state.recoveryConnectTimeoutMs)
+        pendingUiFormState = state
+    }
+
+    private fun defaultUiFormState(): UiFormState {
+        return UiFormState(
+            rtspUrl = DEFAULT_RTSP_URL,
+            rtspKeepAliveEnabled = true,
+            softwareDecode = false,
+            audioEnabled = true,
+            fastSeek = true,
+            recoveryEnabled = true,
+            transportCheckedId = R.id.rb_transport_auto,
+            rendererCheckedId = R.id.rb_renderer_hw_surface_direct,
+            latencyCheckedId = R.id.rb_latency_ultra_low,
+            clockCheckedId = R.id.rb_clock_auto,
+            bufferSize = "4096",
+            timeout = "10000",
+            audioInitBufferMs = "200",
+            rtspKeepAliveInterval = "30",
+            proxyUrl = "",
+            proxyUsername = "",
+            proxyPassword = "",
+            recoveryMaxAttempts = "3",
+            recoveryIntervalMs = "300",
+            recoveryNoPacketTimeoutMs = "1500",
+            recoveryConnectTimeoutMs = "3000"
+        )
     }
 
     private fun emptyState(): PlayerStateSnapshot {

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/rootScrollView"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#F5F7FA"
@@ -8,12 +9,14 @@
     android:fillViewport="true">
 
     <LinearLayout
+        android:id="@+id/contentContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:padding="12dp">
 
         <LinearLayout
+            android:id="@+id/sourceSection"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="#FFFFFF"
@@ -56,6 +59,7 @@
         </LinearLayout>
 
         <LinearLayout
+            android:id="@+id/previewSection"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
@@ -64,6 +68,7 @@
             android:padding="16dp">
 
             <TextView
+                android:id="@+id/tv_preview_title"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="画面预览"
@@ -72,6 +77,7 @@
                 android:textStyle="bold" />
 
             <TextView
+                android:id="@+id/tv_preview_description"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
@@ -80,6 +86,7 @@
                 android:textSize="13sp" />
 
             <FrameLayout
+                android:id="@+id/previewSurfaceContainer"
                 android:layout_width="match_parent"
                 android:layout_height="260dp"
                 android:layout_marginTop="12dp"
@@ -146,9 +153,27 @@
                     android:layout_weight="1"
                     android:text="销毁播放器" />
             </LinearLayout>
+
+            <Button
+                android:id="@+id/btn_toggle_orientation"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="切到横屏" />
+
+            <TextView
+                android:id="@+id/tv_live_metrics"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:lineSpacingExtra="2dp"
+                android:text="首帧耗时、在线时长、FPS、解码方式会在播放后实时显示。"
+                android:textColor="#344054"
+                android:textSize="13sp" />
         </LinearLayout>
 
         <LinearLayout
+            android:id="@+id/configSectionCard"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
@@ -419,6 +444,110 @@
                         android:text="组播：仅限组播源" />
                 </RadioGroup>
 
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:orientation="vertical">
+
+                    <com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/switch_rtsp_keep_alive"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:checked="true"
+                        android:text="启用 RTSP Keep-Alive"
+                        android:textColor="#101828" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="4dp"
+                        android:text="长期在线的设备流建议保持开启，防止服务端因空闲而断开会话。"
+                        android:textColor="#667085"
+                        android:textSize="12sp" />
+                </LinearLayout>
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:hint="Keep-Alive 间隔"
+                    app:boxBackgroundMode="outline"
+                    app:helperText="单位：秒。RTSP 会话保活间隔，默认 30 秒。"
+                    app:suffixText="s">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/et_rtsp_keep_alive_interval"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="Keep-Alive 间隔"
+                        android:inputType="number"
+                        android:text="30" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="代理设置"
+                    android:textColor="#101828"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="需要经过 HTTP / SOCKS 代理访问视频源时再填写；留空时直连。"
+                    android:textColor="#667085"
+                    android:textSize="12sp" />
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:hint="代理地址"
+                    app:boxBackgroundMode="outline"
+                    app:helperText="示例：http://127.0.0.1:7890">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/et_proxy_url"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="代理地址"
+                        android:inputType="textUri" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:hint="代理用户名"
+                    app:boxBackgroundMode="outline">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/et_proxy_username"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="代理用户名"
+                        android:inputType="textPersonName" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:hint="代理密码"
+                    app:boxBackgroundMode="outline">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/et_proxy_password"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="代理密码"
+                        android:inputType="textPassword" />
+                </com.google.android.material.textfield.TextInputLayout>
+
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -681,6 +810,7 @@
         </LinearLayout>
 
         <LinearLayout
+            android:id="@+id/statusInfoSection"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
