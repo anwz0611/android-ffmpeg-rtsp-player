@@ -96,7 +96,7 @@ class MultiPlayerActivity : BaseInsetsActivity() {
         }
         val url = urls[streamItems.size % urls.size]
         addStream(url)
-        toast("已添加播放项")
+        toast("已添加通道")
     }
 
     private fun fillPreset(targetCount: Int) {
@@ -212,7 +212,7 @@ class MultiPlayerActivity : BaseInsetsActivity() {
             ?: 0L
         val totalErrors = streamItems.sumOf { it.errorCount }
 
-        tvStreamCount.text = "活跃播放器: $activeCount / $totalCount"
+        tvStreamCount.text = "在线 $activeCount / $totalCount"
         tvGridSummary.text = buildString {
             append("播放中 ").append(playingCount)
             append(" | 待启动 ").append(readyCount)
@@ -315,7 +315,7 @@ class MultiPlayerActivity : BaseInsetsActivity() {
         private var pendingRecordingFile: File? = null
         private var pendingRecordingDisplayName: String? = null
         private var requestedRecordingFile: File? = null
-        private var lastEventMessage: String = "等待开始播放"
+        private var lastEventMessage: String = "等待开始预览"
 
         private var surfaceView: SurfaceView? = null
         private var tvStreamId: TextView? = null
@@ -342,7 +342,7 @@ class MultiPlayerActivity : BaseInsetsActivity() {
             val btnRemoveStream: Button = view.findViewById(R.id.btn_remove_stream)
             surfaceView = view.findViewById(R.id.surface_view)
 
-            tvStreamId?.text = "流 #$displayId"
+            tvStreamId?.text = "通道 $displayId"
             tvStreamUrl?.text = url
             surfaceView?.holder?.addCallback(this)
 
@@ -422,13 +422,13 @@ class MultiPlayerActivity : BaseInsetsActivity() {
                     runOnUiThread {
                         errorCount += 1
                         Log.e(TAG, "player[$displayId] error: $errorCode, $errorMessage")
-                        updateStatus("错误")
-                        lastEventMessage = "错误: $errorMessage"
+                        updateStatus("异常")
+                        lastEventMessage = "连接失败: $errorMessage"
                         updateUi()
                     }
                 }
             player = createdPlayer
-            updateStatus("待播放")
+            updateStatus("待预览")
             updateUi()
             return createdPlayer
         }
@@ -457,8 +457,8 @@ class MultiPlayerActivity : BaseInsetsActivity() {
             pendingRecordingDisplayName = null
             requestedRecordingFile = null
             lastRecordPath = null
-            updateStatus("已销毁")
-            lastEventMessage = "播放器已销毁"
+            updateStatus("已重置")
+            lastEventMessage = "连接已重置"
             updateUi()
         }
 
@@ -565,30 +565,26 @@ class MultiPlayerActivity : BaseInsetsActivity() {
             btnRecordStream?.isEnabled = hasPlayer && (isPlaying || isRecording) && !isPending
             btnTakePhoto?.isEnabled = hasPlayer && (isPlaying || isRecording) && !isPending
             btnDestroyStream?.isEnabled = hasPlayer && !isPending
-            btnRecordStream?.text = if (isRecording) "停录" else "录制"
+            btnRecordStream?.text = if (isRecording) "停止" else "录制"
 
             if (!hasPlayer) {
-                updateStatus("待播放")
-                updateStats("等待开始播放")
+                updateStatus("待预览")
+                updateStats("等待开始预览")
                 updateSummary()
                 return
             }
 
-            val activePlayer = currentPlayer ?: return
-            val streamId = activePlayer.getStreamId()
-            val streamState = state?.streamStateCode ?: "UNKNOWN"
-            updateStatus(
+            val statusLabel =
                 when {
-                    isRecording -> "播放 / 录制"
+                    isRecording -> "播放中 / 录制中"
                     isPlaying -> "播放中"
-                    isPending -> "处理中"
-                    else -> "待播放"
+                    isPending -> "连接中"
+                    else -> "待预览"
                 }
-            )
+            updateStatus(statusLabel)
 
             val stats = buildString {
-                append("流ID ").append(streamId)
-                append(" | ").append(streamState).append('\n')
+                append("状态 ").append(statusLabel).append('\n')
                 firstFrameCostMs?.let {
                     append("首帧 ").append(it).append("ms")
                 } ?: append("首帧待采样")
@@ -647,7 +643,7 @@ class MultiPlayerActivity : BaseInsetsActivity() {
         }
 
         private fun shouldShowEventMessage(): Boolean {
-            return lastEventMessage.isNotBlank() && lastEventMessage != "等待开始播放"
+            return lastEventMessage.isNotBlank() && lastEventMessage != "等待开始预览"
         }
 
         private fun importPendingRecordingToAlbum() {
@@ -688,7 +684,7 @@ class MultiPlayerActivity : BaseInsetsActivity() {
                     runOnUiThread {
                         requestedRecordingFile = null
                         lastRecordPath = savedMedia.displayPath
-                        toast("流 #$displayId 录制已保存到相册")
+                        toast("通道 $displayId 录制已保存到相册")
                         lastEventMessage = "最近录制: ${savedMedia.displayPath}"
                         updateUi()
                     }
@@ -697,7 +693,7 @@ class MultiPlayerActivity : BaseInsetsActivity() {
                     runOnUiThread {
                         requestedRecordingFile = null
                         lastRecordPath = sourceFile.absolutePath
-                        toast("流 #$displayId 保存录制失败: ${error.message}")
+                        toast("通道 $displayId 保存录制失败: ${error.message}")
                         lastEventMessage = "保存失败，临时文件: ${sourceFile.absolutePath}"
                         updateUi()
                     }

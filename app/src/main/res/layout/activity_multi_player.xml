@@ -2,7 +2,7 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F5F7FA"
+    android:background="@color/app_background"
     android:clipToPadding="false"
     android:fillViewport="true">
 
@@ -15,15 +15,15 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="#FFFFFF"
+            android:background="@drawable/card_panel_bg"
             android:orientation="vertical"
             android:padding="16dp">
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="多路并发演示"
-                android:textColor="#101828"
+                android:text="多路监看"
+                android:textColor="@color/text_primary"
                 android:textSize="18sp"
                 android:textStyle="bold" />
 
@@ -31,8 +31,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:text="支持单地址快速添加，也支持一行一个地址批量输入。预设 4/9/16 会按地址列表依次铺成宫格。"
-                android:textColor="#667085"
+                android:text="支持单地址快速添加，也支持一行一个地址批量输入。"
+                android:textColor="@color/text_secondary"
                 android:textSize="13sp" />
 
             <EditText
@@ -47,8 +47,8 @@
                 android:padding="12dp"
                 android:scrollbars="vertical"
                 android:text="rtsp://stream.strba.sk:1935/strba/VYHLAD_JAZERO.stream"
-                android:textColor="#101828"
-                android:textColorHint="#98A2B3" />
+                android:textColor="@color/text_primary"
+                android:textColorHint="@color/text_secondary" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -61,7 +61,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="预设路数"
-                    android:textColor="#344054"
+                    android:textColor="@color/text_body"
                     android:textSize="14sp"
                     android:textStyle="bold" />
 
@@ -102,7 +102,7 @@
                     android:layout_height="44dp"
                     android:layout_marginEnd="6dp"
                     android:layout_weight="1"
-                    android:text="添加一路" />
+                    android:text="添加通道" />
 
                 <Button
                     android:id="@+id/btn_play_all"
@@ -111,7 +111,7 @@
                     android:layout_marginStart="6dp"
                     android:layout_marginEnd="6dp"
                     android:layout_weight="1"
-                    android:text="全部播放" />
+                    android:text="全部开始" />
 
                 <Button
                     android:id="@+id/btn_stop_all"
@@ -128,7 +128,7 @@
                     android:layout_height="44dp"
                     android:layout_marginStart="6dp"
                     android:layout_weight="1"
-                    android:text="清空" />
+                    android:text="清空列表" />
             </LinearLayout>
         </LinearLayout>
 
@@ -136,15 +136,15 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:background="#FFFFFF"
+            android:background="@drawable/card_panel_bg"
             android:orientation="vertical"
             android:padding="16dp">
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="总体指标"
-                android:textColor="#101828"
+                android:text="当前监看"
+                android:textColor="@color/text_primary"
                 android:textSize="18sp"
                 android:textStyle="bold" />
 
@@ -153,8 +153,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
-                android:text="活跃播放器: 0 / 0"
-                android:textColor="#344054"
+                android:text="在线 0 / 0"
+                android:textColor="@color/text_body"
                 android:textSize="13sp" />
 
             <TextView
@@ -163,7 +163,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:text="首帧耗时、在线时长、播放稳定性会在这里汇总。"
-                android:textColor="#344054"
+                android:textColor="@color/text_body"
                 android:textSize="13sp" />
         </LinearLayout>
 

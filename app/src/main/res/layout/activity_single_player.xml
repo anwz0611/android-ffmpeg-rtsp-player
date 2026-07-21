@@ -4,7 +4,7 @@
     android:id="@+id/rootScrollView"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F5F7FA"
+    android:background="@color/app_background"
     android:clipToPadding="false"
     android:fillViewport="true">
 
@@ -19,15 +19,15 @@
             android:id="@+id/sourceSection"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="#FFFFFF"
+            android:background="@drawable/card_panel_bg"
             android:orientation="vertical"
             android:padding="16dp">
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="播放源"
-                android:textColor="#101828"
+                android:text="视频源"
+                android:textColor="@color/text_primary"
                 android:textSize="18sp"
                 android:textStyle="bold" />
 
@@ -35,8 +35,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:text="RTSP 地址必填。先填地址、直接看画面，下面再按需调整高级配置。"
-                android:textColor="#667085"
+                android:text="输入 RTSP 地址后即可预览。"
+                android:textColor="@color/text_secondary"
                 android:textSize="13sp" />
 
             <com.google.android.material.textfield.TextInputLayout
@@ -63,7 +63,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:background="#FFFFFF"
+            android:background="@drawable/card_panel_bg"
             android:orientation="vertical"
             android:padding="16dp">
 
@@ -71,8 +71,8 @@
                 android:id="@+id/tv_preview_title"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="画面预览"
-                android:textColor="#101828"
+                android:text="实时预览"
+                android:textColor="@color/text_primary"
                 android:textSize="18sp"
                 android:textStyle="bold" />
 
@@ -81,8 +81,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:text="播放状态会叠加显示在画面中央，便于快速确认当前是否已经拉流成功。"
-                android:textColor="#667085"
+                android:text="视频画面与状态会同时显示，便于快速确认连接是否正常。"
+                android:textColor="@color/text_secondary"
                 android:textSize="13sp" />
 
             <FrameLayout
@@ -90,7 +90,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="260dp"
                 android:layout_marginTop="12dp"
-                android:background="#0B0F14">
+                android:background="@drawable/video_panel_bg">
 
                 <SurfaceView
                     android:id="@+id/surface_view"
@@ -101,10 +101,12 @@
                     android:id="@+id/tv_status"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:text="待播放"
-                    android:textColor="#FFFFFF"
-                    android:textSize="16sp"
+                    android:layout_gravity="top|start"
+                    android:layout_margin="12dp"
+                    android:background="@drawable/status_badge_bg"
+                    android:text="等待预览"
+                    android:textColor="@color/white"
+                    android:textSize="12sp"
                     android:textStyle="bold" />
             </FrameLayout>
 
@@ -120,7 +122,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginEnd="6dp"
                     android:layout_weight="1"
-                    android:text="播放" />
+                    android:text="开始预览" />
 
                 <Button
                     android:id="@+id/btn_stop"
@@ -128,7 +130,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="6dp"
                     android:layout_weight="1"
-                    android:text="停止" />
+                    android:text="停止预览" />
             </LinearLayout>
 
             <LinearLayout
@@ -143,7 +145,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginEnd="6dp"
                     android:layout_weight="1"
-                    android:text="开始录制" />
+                    android:text="录制" />
 
                 <Button
                     android:id="@+id/btn_destroy"
@@ -151,7 +153,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="6dp"
                     android:layout_weight="1"
-                    android:text="销毁播放器" />
+                    android:text="重置连接" />
             </LinearLayout>
 
             <Button
@@ -159,7 +161,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
-                android:text="切到横屏" />
+                android:text="进入横屏" />
 
             <TextView
                 android:id="@+id/tv_live_metrics"
@@ -167,8 +169,8 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
                 android:lineSpacingExtra="2dp"
-                android:text="首帧耗时、在线时长、FPS、解码方式会在播放后实时显示。"
-                android:textColor="#344054"
+                android:text="首帧、在线时长、分辨率和解码方式会在播放后显示。"
+                android:textColor="@color/text_body"
                 android:textSize="13sp" />
         </LinearLayout>
 
@@ -177,7 +179,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:background="#FFFFFF"
+            android:background="@drawable/card_panel_bg"
             android:orientation="vertical"
             android:padding="16dp">
 
@@ -202,8 +204,8 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="高级配置"
-                        android:textColor="#101828"
+                        android:text="高级设置"
+                        android:textColor="@color/text_primary"
                         android:textSize="18sp"
                         android:textStyle="bold" />
 
@@ -211,8 +213,8 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
-                        android:text="默认值通常就够用。点击展开后可以查看每个参数的单位和说明。"
-                        android:textColor="#667085"
+                        android:text="默认值通常就够用，需要时再展开。"
+                        android:textColor="@color/text_secondary"
                         android:textSize="13sp" />
                 </LinearLayout>
 
@@ -221,7 +223,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="展开"
-                    android:textColor="#475467"
+                    android:textColor="@color/text_body"
                     android:textSize="14sp" />
             </LinearLayout>
 
@@ -237,7 +239,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="常用选项"
-                    android:textColor="#101828"
+                    android:textColor="@color/text_primary"
                     android:textSize="15sp"
                     android:textStyle="bold" />
 
@@ -246,7 +248,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
                     android:text="这些是最常改的项，优先从这里调整。"
-                    android:textColor="#667085"
+                    android:textColor="@color/text_secondary"
                     android:textSize="12sp" />
 
                 <LinearLayout
@@ -260,14 +262,14 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="软解码"
-                        android:textColor="#101828" />
+                        android:textColor="@color/text_primary" />
 
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="4dp"
                         android:text="关闭时优先使用硬解码。"
-                        android:textColor="#667085"
+                        android:textColor="@color/text_secondary"
                         android:textSize="12sp" />
                 </LinearLayout>
 
@@ -283,14 +285,14 @@
                         android:layout_height="wrap_content"
                         android:checked="true"
                         android:text="启用音频"
-                        android:textColor="#101828" />
+                        android:textColor="@color/text_primary" />
 
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="4dp"
                         android:text="关闭后只播放视频，不会初始化音频输出。"
-                        android:textColor="#667085"
+                        android:textColor="@color/text_secondary"
                         android:textSize="12sp" />
                 </LinearLayout>
 
@@ -306,14 +308,14 @@
                         android:layout_height="wrap_content"
                         android:checked="true"
                         android:text="启用 Fast Seek"
-                        android:textColor="#101828" />
+                        android:textColor="@color/text_primary" />
 
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="4dp"
                         android:text="优化定位和追帧速度，直播场景通常保持开启。"
-                        android:textColor="#667085"
+                        android:textColor="@color/text_secondary"
                         android:textSize="12sp" />
                 </LinearLayout>
 
@@ -382,7 +384,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
                     android:text="渲染与延迟"
-                    android:textColor="#101828"
+                    android:textColor="@color/text_primary"
                     android:textSize="15sp"
                     android:textStyle="bold" />
 
@@ -391,7 +393,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
                     android:text="这一组决定拉流稳定性、显示方式和实时性。"
-                    android:textColor="#667085"
+                    android:textColor="@color/text_secondary"
                     android:textSize="12sp" />
 
                 <TextView
@@ -399,7 +401,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
                     android:text="RTSP 传输协议"
-                    android:textColor="#101828"
+                    android:textColor="@color/text_primary"
                     android:textSize="15sp"
                     android:textStyle="bold" />
 
@@ -408,7 +410,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
                     android:text="自动模式兼容性最好；TCP 更稳，UDP 延迟更低，组播只在明确使用组播源时选择。"
-                    android:textColor="#667085"
+                    android:textColor="@color/text_secondary"
                     android:textSize="12sp" />
 
                 <RadioGroup
@@ -456,14 +458,14 @@
                         android:layout_height="wrap_content"
                         android:checked="true"
                         android:text="启用 RTSP Keep-Alive"
-                        android:textColor="#101828" />
+                        android:textColor="@color/text_primary" />
 
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="4dp"
                         android:text="长期在线的设备流建议保持开启，防止服务端因空闲而断开会话。"
-                        android:textColor="#667085"
+                        android:textColor="@color/text_secondary"
                         android:textSize="12sp" />
                 </LinearLayout>
 
@@ -490,7 +492,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
                     android:text="代理设置"
-                    android:textColor="#101828"
+                    android:textColor="@color/text_primary"
                     android:textSize="15sp"
                     android:textStyle="bold" />
 
@@ -499,7 +501,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
                     android:text="需要经过 HTTP / SOCKS 代理访问视频源时再填写；留空时直连。"
-                    android:textColor="#667085"
+                    android:textColor="@color/text_secondary"
                     android:textSize="12sp" />
 
                 <com.google.android.material.textfield.TextInputLayout
@@ -553,7 +555,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
                     android:text="渲染模式"
-                    android:textColor="#101828"
+                    android:textColor="@color/text_primary"
                     android:textSize="15sp"
                     android:textStyle="bold" />
 
@@ -562,7 +564,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
                     android:text="硬解有 3 种渲染方式，软解有 2 种。切换软解开关时，会显示对应可选项。"
-                    android:textColor="#667085"
+                    android:textColor="@color/text_secondary"
                     android:textSize="12sp" />
 
                 <RadioGroup
@@ -611,7 +613,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
                     android:text="延迟模式"
-                    android:textColor="#101828"
+                    android:textColor="@color/text_primary"
                     android:textSize="15sp"
                     android:textStyle="bold" />
 
@@ -620,7 +622,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
                     android:text="均衡模式更稳；超低延迟模式更适合实时预览和对讲类场景。"
-                    android:textColor="#667085"
+                    android:textColor="@color/text_secondary"
                     android:textSize="12sp" />
 
                 <RadioGroup
@@ -649,7 +651,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
                     android:text="主时钟策略"
-                    android:textColor="#101828"
+                    android:textColor="@color/text_primary"
                     android:textSize="15sp"
                     android:textStyle="bold" />
 
@@ -658,7 +660,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
                     android:text="一般保持自动。音频主时钟适合重视声音连续性；视频主时钟适合更看重画面节奏。"
-                    android:textColor="#667085"
+                    android:textColor="@color/text_secondary"
                     android:textSize="12sp" />
 
                 <RadioGroup
@@ -699,7 +701,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
                     android:text="恢复策略"
-                    android:textColor="#101828"
+                    android:textColor="@color/text_primary"
                     android:textSize="15sp"
                     android:textStyle="bold" />
 
@@ -708,7 +710,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
                     android:text="断流、无包或连接失败时，按这一组参数决定是否自动恢复以及恢复频率。"
-                    android:textColor="#667085"
+                    android:textColor="@color/text_secondary"
                     android:textSize="12sp" />
 
                 <LinearLayout
@@ -723,14 +725,14 @@
                         android:layout_height="wrap_content"
                         android:checked="true"
                         android:text="断流自动恢复"
-                        android:textColor="#101828" />
+                        android:textColor="@color/text_primary" />
 
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="4dp"
                         android:text="网络中断、无包或连接失败时按下面的恢复策略自动重连。"
-                        android:textColor="#667085"
+                        android:textColor="@color/text_secondary"
                         android:textSize="12sp" />
                 </LinearLayout>
 
@@ -814,15 +816,15 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:background="#FFFFFF"
+            android:background="@drawable/card_panel_bg"
             android:orientation="vertical"
             android:padding="16dp">
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="状态信息"
-                android:textColor="#101828"
+                android:text="连接状态"
+                android:textColor="@color/text_primary"
                 android:textSize="18sp"
                 android:textStyle="bold" />
 
@@ -832,7 +834,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
                 android:text="流信息: 无"
-                android:textColor="#344054"
+                android:textColor="@color/text_body"
                 android:textSize="13sp" />
 
             <TextView
@@ -841,7 +843,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:text="录制状态: 未录制"
-                android:textColor="#344054"
+                android:textColor="@color/text_body"
                 android:textSize="13sp" />
         </LinearLayout>
 
@@ -875,8 +877,8 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="性能监控"
-                        android:textColor="#101828"
+                        android:text="诊断详情"
+                        android:textColor="@color/text_primary"
                         android:textSize="16sp"
                         android:textStyle="bold" />
 
@@ -885,7 +887,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="▼"
-                        android:textColor="#475467"
+                        android:textColor="@color/text_body"
                         android:textSize="14sp" />
                 </LinearLayout>
 
@@ -903,8 +905,8 @@
                         android:fontFamily="monospace"
                         android:lineSpacingExtra="2dp"
                         android:padding="8dp"
-                        android:text="性能监控数据..."
-                        android:textColor="#344054"
+                        android:text="诊断数据..."
+                        android:textColor="@color/text_body"
                         android:textSize="11sp" />
                 </ScrollView>
             </LinearLayout>

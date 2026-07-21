@@ -33,11 +33,13 @@
             android:name=".SinglePlayerActivity"
             android:exported="false"
             android:configChanges="orientation|screenSize|keyboardHidden"
-            android:screenOrientation="portrait" />
+            android:screenOrientation="portrait"
+            android:label="@string/single_player" />
         <activity
             android:name=".MultiPlayerActivity"
             android:exported="false"
-            android:screenOrientation="portrait" />
+            android:screenOrientation="portrait"
+            android:label="@string/multi_player" />
         <activity
             android:name=".YUVTestActivity"
             android:exported="false"

@@ -309,13 +309,13 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
                     lastErrorSummary = "$errorCode / $errorMessage"
                     refreshStateFromPlayer()
                     Log.e(TAG, "player error: code=$errorCode, message=$errorMessage")
-                    showToast("播放器错误: $errorMessage")
+                    showToast("连接失败: $errorMessage")
                     updateUI()
                 }
             }
 
         refreshStateFromPlayer()
-        showToast("播放器已创建并开始播放")
+        showToast("正在开始预览")
     }
 
     private fun buildStreamConfig(url: String): StreamConfig {
@@ -610,7 +610,7 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
             btnStop.isEnabled = hasPlayer && isPlaying && !isPending
             btnRecord.isEnabled = (isPlaying || isRecording) && !isPending
             btnDestroy.isEnabled = hasPlayer && !isPending
-            btnRecord.text = if (isRecording) "停止录制" else "开始录制"
+            btnRecord.text = if (isRecording) "停止录制" else "录制"
 
             performanceMonitorCard.visibility = if (shouldShowPerformanceMonitor) View.VISIBLE else View.GONE
             if (!shouldShowPerformanceMonitor) {
@@ -620,11 +620,11 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
             }
 
             val statusText = when {
-                !hasPlayer -> "状态: 未开始播放"
-                isPending -> "状态: 操作进行中"
-                isRecording -> "状态: 播放中，录制中"
-                isPlaying -> "状态: 播放中"
-                else -> "状态: 已停止"
+                !hasPlayer -> "等待预览"
+                isPending -> "正在连接"
+                isRecording -> "播放中 / 录制中"
+                isPlaying -> "播放中"
+                else -> "已停止"
             }
             tvStatus.text = statusText
             tvLiveMetrics.text = buildLiveMetricsText(
@@ -634,7 +634,7 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
                 state = state
             )
 
-            val infoBuilder = StringBuilder("统计: 单流模式")
+            val infoBuilder = StringBuilder("预览信息")
             if (streamId >= 0) {
                 infoBuilder.append(" | 流ID: ").append(streamId)
             }
@@ -730,9 +730,9 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
 
     private fun applyWindowMode(configuration: Configuration) {
         btnToggleOrientation.text = if (configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            "切到竖屏"
+            "退出横屏"
         } else {
-            "切到横屏"
+            "进入横屏"
         }
         if (configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
             supportActionBar?.hide()
@@ -809,7 +809,7 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
         val snapshot = currentPlayer.getState()
         val now = System.currentTimeMillis()
 
-        statsBuilder.append("播放器状态监控\n\n")
+        statsBuilder.append("诊断详情\n\n")
         statsBuilder.append("更新时间: ")
             .append(SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date(now)))
             .append('\n')
@@ -880,7 +880,7 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
         state: PlayerStateSnapshot
     ): String {
         if (!hasPlayer) {
-            return "首帧耗时、在线时长、FPS、解码方式会在播放后实时显示。"
+            return "首帧、在线时长、分辨率和解码方式会在播放后显示。"
         }
 
         val lines = mutableListOf<String>()

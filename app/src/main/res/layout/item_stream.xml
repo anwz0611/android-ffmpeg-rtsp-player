@@ -4,7 +4,8 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     app:cardCornerRadius="8dp"
-    app:cardElevation="2dp">
+    app:cardBackgroundColor="@color/surface_card"
+    app:cardElevation="1dp">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -22,8 +23,8 @@
                 android:id="@+id/tv_stream_id"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="流 #1"
-                android:textColor="#101828"
+                android:text="通道 1"
+                android:textColor="@color/text_primary"
                 android:textSize="12sp"
                 android:textStyle="bold" />
 
@@ -36,7 +37,7 @@
                 android:ellipsize="end"
                 android:maxLines="1"
                 android:text="rtsp://example.com/stream"
-                android:textColor="#667085"
+                android:textColor="@color/text_secondary"
                 android:textSize="10sp" />
 
             <Button
@@ -44,7 +45,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="32dp"
                 android:minWidth="0dp"
-                android:text="删"
+                android:text="移除"
                 android:textSize="10sp" />
         </LinearLayout>
 
@@ -53,7 +54,7 @@
             android:layout_width="match_parent"
             android:layout_height="128dp"
             android:layout_marginTop="8dp"
-            android:background="#0B0F14">
+            android:background="@drawable/video_panel_bg">
 
             <SurfaceView
                 android:id="@+id/surface_view"
@@ -65,8 +66,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:text="待播放"
-                android:textColor="#FFFFFF"
+                android:text="待预览"
+                android:textColor="@color/white"
                 android:textSize="12sp"
                 android:textStyle="bold" />
         </FrameLayout>
@@ -77,8 +78,8 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:lineSpacingExtra="2dp"
-            android:text="等待开始播放"
-            android:textColor="#344054"
+            android:text="等待开始预览"
+            android:textColor="@color/text_body"
             android:textSize="11sp" />
 
         <LinearLayout
@@ -94,7 +95,7 @@
                 android:layout_marginEnd="4dp"
                 android:layout_weight="1"
                 android:minWidth="0dp"
-                android:text="播放"
+                android:text="开始"
                 android:textSize="11sp" />
 
             <Button
@@ -141,7 +142,7 @@
             android:layout_width="match_parent"
             android:layout_height="36dp"
             android:layout_marginTop="6dp"
-            android:text="销毁播放器"
+            android:text="重置连接"
             android:textSize="11sp" />
     </LinearLayout>
 </androidx.cardview.widget.CardView>

@@ -41,7 +41,7 @@
                     android:id="@+id/btn_toggle_orientation"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="切到竖屏" />
+                    android:text="退出横屏" />
             </LinearLayout>
 
             <LinearLayout
@@ -56,7 +56,7 @@
                     android:id="@+id/tv_status"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="状态: 未开始播放"
+                    android:text="等待预览"
                     android:textColor="@android:color/white"
                     android:textSize="13sp" />
 
@@ -66,7 +66,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
                     android:lineSpacingExtra="2dp"
-                    android:text="首帧耗时、在线时长、FPS、解码方式会在播放后实时显示。"
+                    android:text="首帧、在线时长、分辨率和解码方式会在播放后显示。"
                     android:textColor="@android:color/white"
                     android:textSize="12sp" />
 
@@ -122,25 +122,25 @@
                 android:id="@+id/btn_play"
                 android:layout_width="1dp"
                 android:layout_height="1dp"
-                android:text="播放" />
+                android:text="开始预览" />
 
             <Button
                 android:id="@+id/btn_stop"
                 android:layout_width="1dp"
                 android:layout_height="1dp"
-                android:text="停止" />
+                android:text="停止预览" />
 
             <Button
                 android:id="@+id/btn_record"
                 android:layout_width="1dp"
                 android:layout_height="1dp"
-                android:text="开始录制" />
+                android:text="录制" />
 
             <Button
                 android:id="@+id/btn_destroy"
                 android:layout_width="1dp"
                 android:layout_height="1dp"
-                android:text="销毁播放器" />
+                android:text="重置连接" />
 
             <com.google.android.material.switchmaterial.SwitchMaterial
                 android:id="@+id/switch_rtsp_keep_alive"
@@ -391,7 +391,7 @@
                             android:id="@+id/performanceMonitorTextView"
                             android:layout_width="1dp"
                             android:layout_height="1dp"
-                            android:text="性能监控数据..." />
+                            android:text="诊断数据..." />
                     </ScrollView>
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
