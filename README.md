@@ -1,76 +1,133 @@
-# FFmpegStreamPlayer
-
-基于 FFmpeg 6.1.1 的 Android 流媒体播放器，支持 RTSP/RTMP/HLS/HTTP-FLV 等协议。
-
-## 截图
+# Android FFmpeg RTSP Player
 
 <div align="center">
-<img src="screenshot/MuMu-20251011-155352-156.png" alt="多流播放" width="280"/>
-<img src="screenshot/MuMu-20251011-153144-611.png" alt="单流播放" width="280"/>
-<img src="screenshot/MuMu-20251218-104858-750.png" alt="YUV示例" width="280"/>
-<img src="screenshot/MuMu-20251219-141657-940.png" alt="画面变换测试" width="280"/>
+
+**Android 超低延迟流媒体播放器 SDK**
+
+支持 RTSP、RTMP、HLS、HTTP-FLV、H.264/H.265、软硬件解码、OpenGL ES、截图、录像、自动重连、多路播放及 YUV 数据处理。
+
+![Android](https://img.shields.io/badge/Android-7.0%2B-3DDC84?logo=android)
+![FFmpeg](https://img.shields.io/badge/FFmpeg-6.1.1-007808?logo=ffmpeg)
+![License](https://img.shields.io/badge/SDK-Free%20Commercial%20Use-orange)
+
+[下载 Demo](https://github.com/anwz0611/android-ffmpeg-rtsp-player/releases/latest) ·
+[API 文档](https://github.com/anwz0611/android-ffmpeg-rtsp-player/wiki) ·
+[问题反馈](https://github.com/anwz0611/android-ffmpeg-rtsp-player/issues)
+
 </div>
 
-## 主要特性
+> **免费版允许个人和企业商用。**
+>
+> 不限制应用、设备和最终用户数量，同一时刻最多播放一路；只有多路并发和 YUV 数据导出需要商业授权。
 
-- 超低延迟：硬件解码 80-120ms，软件解码 120-200ms
-- 多流并发：支持 16 路同时播放
-- 硬件/软件解码自动切换
-- 支持 4K 视频播放
-- H.264/H.265 硬件解码
-- OpenGL ES 渲染：支持 OpenGL ES 3.0+ 硬件加速渲染，提供更好的性能和画面质量
-- 多种渲染模式：软件渲染、OpenGL ES 渲染、自动选择
-- 实时录制
-- YUV 数据回调（可用于 AI 分析、滤镜处理等）
-- 异步 API，不阻塞 UI
-- 自动重连
+## 效果演示
 
-## 支持协议
+<div align="center">
+<img src="screenshot/testv.gif" alt="Android RTSP 超低延迟播放演示" width="760"/>
+</div>
 
-RTSP、RTMP、HTTP、HLS、HTTP-FLV、RTP、UDP、TCP
+## 功能特点
 
-## 支持格式
+- 硬件解码参考延迟 80–120ms，软件解码参考延迟 120–200ms
+- 支持 RTSP、RTMP、HLS、HTTP-FLV、RTP、UDP、TCP
+- 支持 H.264、H.265/HEVC、MPEG-4 和最高 4K 视频
+- 支持 MediaCodec 硬件解码和 FFmpeg 软件解码
+- 支持 OpenGL ES 3.0+ 硬件加速渲染
+- 支持截图、录像、自动重连及异步 API
+- 支持 Android 7.0+（API 24）
+- 支持 arm64-v8a、armeabi-v7a、x86_64
 
-- 视频：H.264、H.265/HEVC（硬件/软件解码）、MPEG-4（软件解码）
-- 分辨率：4K、2K、1080p、720p 及以下
-- 音频：AAC、MP3、PCM
+## 免费版与商业版
 
+| 功能 | 免费版 | 商业版 |
+|---|:---:|:---:|
+| 个人及企业商用 | ✅ | ✅ |
+| 应用、设备、最终用户数量 | 不限制 | 按协议 |
+| 单路播放 | ✅ | ✅ |
+| 多路并发 | — | ✅ |
+| 截图、录像、4K | ✅ | ✅ |
+| H.264/H.265 软硬解 | ✅ | ✅ |
+| OpenGL ES、自动重连 | ✅ | ✅ |
+| YUV 数据导出 | — | ✅ |
+| Headless YUV/AI 分析 | — | ✅ |
+| 核心源码 | 不提供 | 不提供 |
 
-### Android API 文档
+## Demo 截图
 
-完整的 Android 调用层 API 说明，请直接查看  Wiki：
+<div align="center">
+<img src="screenshot/MuMu-20251011-153144-611.png" alt="单路播放" width="280"/>
+<img src="screenshot/MuMu-20251011-155352-156.png" alt="多路播放" width="280"/>
+<img src="screenshot/MuMu-20251218-104858-750.png" alt="YUV 数据处理" width="280"/>
+</div>
 
-- [Android API Reference](https://github.com/anwz0611/android-ffmpeg-stream-player/wiki)
+Demo 已获得专用展示授权，可以体验多路播放和 YUV 数据处理。该授权只对 Demo 的指定包名和签名生效，不能用于其他应用。仓库中的签名文件仅用于编译示例，不应用于正式产品。
 
-## 延迟对比
+## 快速开始
 
-| 播放器 | 延迟 |
-|-------|-----|
-| 本项目（硬件解码） | 80-120ms |
-| 本项目（软件解码） | 120-200ms |
-| 原生 MediaPlayer | 300-800ms |
+### 1. 添加 AAR
 
-## 环境要求
+将 `ffmpegrtsp-lib.aar` 放入 `app/libs/`，然后添加依赖：
 
-- Android 7.0+ (API 24)
+```kotlin
+dependencies {
+    implementation(files("libs/ffmpegrtsp-lib.aar"))
+}
+```
 
-## 联系方式
+### 2. 添加网络权限
+
+```xml
+<uses-permission android:name="android.permission.INTERNET" />
+<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+```
+
+### 3. 播放视频
+
+```kotlin
+val config = StreamConfig.Builder(rtspUrl)
+    .audioEnabled(true)
+    .build()
+
+val player = StreamPlayer.playWithConfig(
+    this,
+    surfaceView,
+    config
+).setOnError { code, message ->
+    Log.e("Player", "$code: $message")
+}
+```
+
+完整示例：
+
+- [单路播放](app/src/main/java/com/jxj/ffmpegrtspplayer/SinglePlayerActivity.kt)
+- [多路播放](app/src/main/java/com/jxj/ffmpegrtspplayer/MultiPlayerActivity.kt)
+- [YUV 处理](app/src/main/java/com/jxj/ffmpegrtspplayer/YUVTestActivity.kt)
+- [Headless 分析](app/src/main/java/com/jxj/ffmpegrtspplayer/HeadlessAnalysisActivity.kt)
+
+## 参考延迟
+
+| 播放方式 | 参考延迟 |
+|---|---:|
+| 硬件解码 | 80–120ms |
+| 软件解码 | 120–200ms |
+| Android MediaPlayer | 300–800ms |
+
+实际延迟受摄像机编码、网络、GOP、传输方式和设备性能影响，建议使用真实设备和视频源测试。
+
+## 商业授权
+
+商业授权开放多路并发、YUV 数据导出和 Headless YUV/AI 分析，并可另外提供技术支持及定制开发。
+
+免费版和商业版均以 AAR 形式提供，不提供播放器核心源码。
+
 - QQ 群：647718711
-
-示例地址网络较差时可能体现不出超低延迟，建议自行搭建测试环境。定制需求或问题反馈请联系作者。本项目长期维护
-（PS：遇到任何问题加群沟通，接定制化需求请联系作者）。
-
-aar 包含 arm64-v8a、armeabi-v7a、x86_64 架构，如只需要特定架构请联系作者。
+- [GitHub Issues](https://github.com/anwz0611/android-ffmpeg-rtsp-player/issues)
 
 ## 许可证
 
-GPL v2，商业使用请联系作者获取授权。
-## Star History
+- 示例源码：以仓库 `LICENSE` 为准
+- 核心播放器 SDK：闭源免费商用许可或商业授权
+- FFmpeg 等第三方组件：遵循各组件自身许可证
 
-<a href="https://www.star-history.com/?repos=anwz0611%2Fandroid-ffmpeg-rtsp-player&type=date&legend=top-left">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/image?repos=anwz0611/android-ffmpeg-rtsp-player&type=date&theme=dark&legend=top-left" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/image?repos=anwz0611/android-ffmpeg-rtsp-player&type=date&legend=top-left" />
-   <img alt="Star History Chart" src="https://api.star-history.com/image?repos=anwz0611/android-ffmpeg-rtsp-player&type=date&legend=top-left" />
- </picture>
-</a>
+如果这个项目对你有帮助，欢迎点一个 Star 支持持续维护。
+
