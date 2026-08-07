@@ -62,47 +62,33 @@
 
 Demo 已获得专用展示授权，可以体验多路播放和 YUV 数据处理。该授权只对 Demo 的指定包名和签名生效，不能用于其他应用。仓库中的签名文件仅用于编译示例，不应用于正式产品。
 
-## 快速开始
+## 使用场景
 
-### 1. 添加 AAR
+- **安防监控与视频墙**：连接 IPC、NVR 和流媒体服务器，适合门店、园区、仓库、工地等实时预览场景；可结合多路播放、截图、录像和断线自动恢复构建监控客户端。
+- **无人机地面站**：用于无人机图传、航拍预览和巡检画面回传。低延迟播放便于飞手及时判断姿态与周边环境，YUV 数据还可用于目标检测、跟踪和告警分析。
+- **机器人与远程操控**：适合巡检机器人、机器狗、无人车、机械臂等设备的视频回传，为远程驾驶、路径判断和现场处置提供实时画面。
+- **工业巡检**：接入普通网络相机、热成像设备或专用视频源，用于电力、能源、制造、矿区等现场巡检，并可结合 AI 分析识别人员、设备状态和异常目标。
+- **车载、船舶与应急指挥**：用于移动设备视频回传、远程会商和应急现场画面汇聚；弱网下可通过延迟策略和自动恢复提升连续性。
+- **智能视觉应用**：通过 YUV 数据回调接入 OpenCV、TensorFlow Lite、ONNX Runtime 或自研算法，实现人车识别、缺陷检测、区域入侵和行为分析。
 
-将 `ffmpegrtsp-lib.aar` 放入 `app/libs/`，然后添加依赖：
+不同设备、编码参数、网络环境和 GOP 长度都会影响实际延迟，建议使用目标硬件和真实视频源进行测试。
 
-```kotlin
-dependencies {
-    implementation(files("libs/ffmpegrtsp-lib.aar"))
-}
-```
+## 文档与示例
 
-### 2. 添加网络权限
+完整的接入步骤、配置项、播放器生命周期、截图录像及 YUV API 请查看 [Android API 文档](https://github.com/anwz0611/android-ffmpeg-rtsp-player/wiki)。
 
-```xml
-<uses-permission android:name="android.permission.INTERNET" />
-<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-```
-
-### 3. 播放视频
-
-```kotlin
-val config = StreamConfig.Builder(rtspUrl)
-    .audioEnabled(true)
-    .build()
-
-val player = StreamPlayer.playWithConfig(
-    this,
-    surfaceView,
-    config
-).setOnError { code, message ->
-    Log.e("Player", "$code: $message")
-}
-```
-
-完整示例：
+仓库内提供以下可运行示例：
 
 - [单路播放](app/src/main/java/com/jxj/ffmpegrtspplayer/SinglePlayerActivity.kt)
 - [多路播放](app/src/main/java/com/jxj/ffmpegrtspplayer/MultiPlayerActivity.kt)
 - [YUV 处理](app/src/main/java/com/jxj/ffmpegrtspplayer/YUVTestActivity.kt)
 - [Headless 分析](app/src/main/java/com/jxj/ffmpegrtspplayer/HeadlessAnalysisActivity.kt)
+
+## R8 / ProGuard 混淆配置
+
+AAR 已内置 Consumer ProGuard/R8 规则，Android Gradle Plugin 在依赖 AAR 时会自动读取并合并这些规则。使用者通常不需要在宿主 App 中重复添加 SDK 混淆配置，直接按正常方式启用 R8/ProGuard 即可。
+
+这些规则用于保护播放器公开 API、JNI 入口、生命周期回调、截图录像能力以及 YUV 处理器接口，避免 SDK 在宿主 Release 构建中被错误裁剪或改名。若使用自定义打包工具而不会自动读取 AAR 内的 Consumer 规则，请确认该工具能够保留 AAR 的 `consumer-rules.pro` 配置。
 
 ## 参考延迟
 
@@ -130,4 +116,3 @@ val player = StreamPlayer.playWithConfig(
 - FFmpeg 等第三方组件：遵循各组件自身许可证
 
 如果这个项目对你有帮助，欢迎点一个 Star 支持持续维护。
-

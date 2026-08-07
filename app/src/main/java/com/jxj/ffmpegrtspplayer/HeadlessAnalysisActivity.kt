@@ -13,9 +13,11 @@ import android.widget.FrameLayout
 import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
+import com.jxj.ffmpegrtsp.lib.api.AudioOptions
 import com.jxj.ffmpegrtsp.lib.api.PlayerStateSnapshot
 import com.jxj.ffmpegrtsp.lib.api.StreamConfig
 import com.jxj.ffmpegrtsp.lib.api.StreamPlayer
+import com.jxj.ffmpegrtsp.lib.api.VideoOptions
 import com.jxj.ffmpegrtsp.lib.yuv.IYUVFrameProcessor
 import com.jxj.ffmpegrtsp.lib.yuv.YUVFrameInfo
 import com.jxj.ffmpegrtsp.lib.yuv.YUVProcessMode
@@ -124,7 +126,7 @@ class HeadlessAnalysisActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
         mainHandler.post(statsRefreshRunnable)
 
         appendLog("HeadlessAnalysisActivity 已创建")
-        appendLog("模式: analysisOnly(true) + RendererType.NONE")
+        appendLog("模式: allowStartWithoutSurface(true) + 软件解码")
         refreshPanels()
     }
 
@@ -180,10 +182,10 @@ class HeadlessAnalysisActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
                     appendLog("切换分析流: $url")
                     currentPlayer.switchSource(url)
                 }
-                currentPlayer.play()
             }
 
             ensureAnalysisProcessorRegistered()
+            player?.play()
             appendLog("已发起无渲染分析流")
             showToast("分析流已发起")
         } catch (e: Exception) {
@@ -196,12 +198,12 @@ class HeadlessAnalysisActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
 
     private fun createHeadlessPlayer(url: String) {
         val config = StreamConfig.Builder(url)
-            .analysisOnly(true)
-            .decodeMode(StreamConfig.DecodeMode.SOFTWARE)
-            .audioEnabled(false)
+            .video(VideoOptions.software())
+            .audio(AudioOptions.disabled())
+            .allowStartWithoutSurface(true)
             .build()
 
-        player = StreamPlayer.playWithConfig(this, config)
+        player = StreamPlayer.prepare(this, config)
             .setOnStateChanged { state ->
                 runOnUiThread { onPlayerStateChanged(state) }
             }

@@ -160,12 +160,6 @@
                 android:checked="true" />
 
             <com.google.android.material.switchmaterial.SwitchMaterial
-                android:id="@+id/switch_fast_seek"
-                android:layout_width="1dp"
-                android:layout_height="1dp"
-                android:checked="true" />
-
-            <com.google.android.material.switchmaterial.SwitchMaterial
                 android:id="@+id/switch_recovery_enabled"
                 android:layout_width="1dp"
                 android:layout_height="1dp"
@@ -175,12 +169,7 @@
                 android:id="@+id/rg_transport_protocol"
                 android:layout_width="1dp"
                 android:layout_height="1dp"
-                android:checkedButton="@id/rb_transport_auto">
-
-                <RadioButton
-                    android:id="@+id/rb_transport_auto"
-                    android:layout_width="1dp"
-                    android:layout_height="1dp" />
+                android:checkedButton="@id/rb_transport_tcp">
 
                 <RadioButton
                     android:id="@+id/rb_transport_tcp"
@@ -245,6 +234,11 @@
                     android:id="@+id/rb_latency_ultra_low"
                     android:layout_width="1dp"
                     android:layout_height="1dp" />
+
+                <RadioButton
+                    android:id="@+id/rb_latency_smooth"
+                    android:layout_width="1dp"
+                    android:layout_height="1dp" />
             </RadioGroup>
 
             <RadioGroup
@@ -274,21 +268,21 @@
                 android:layout_width="1dp"
                 android:layout_height="1dp"
                 android:inputType="number"
-                android:text="4096" />
+                android:text="8192" />
 
             <EditText
                 android:id="@+id/et_timeout"
                 android:layout_width="1dp"
                 android:layout_height="1dp"
                 android:inputType="number"
-                android:text="10000" />
+                android:text="3000" />
 
             <EditText
                 android:id="@+id/et_audio_init_buffer_ms"
                 android:layout_width="1dp"
                 android:layout_height="1dp"
                 android:inputType="number"
-                android:text="200" />
+                android:text="60" />
 
             <EditText
                 android:id="@+id/et_rtsp_keep_alive_interval"

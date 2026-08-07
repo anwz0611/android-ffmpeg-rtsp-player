@@ -13,8 +13,10 @@ import android.widget.EditText
 import android.widget.GridLayout
 import android.widget.TextView
 import android.widget.Toast
+import com.jxj.ffmpegrtsp.lib.api.AudioOptions
 import com.jxj.ffmpegrtsp.lib.api.StreamConfig
 import com.jxj.ffmpegrtsp.lib.api.StreamPlayer
+import com.jxj.ffmpegrtsp.lib.api.StreamPlayerRuntime
 import com.jxj.ffmpegrtsp.lib.api.VideoInfo
 import com.jxj.ffmpegrtsp.lib.capture.FrameCaptureRequest
 import com.jxj.ffmpegrtsp.lib.capture.FrameCaptureResult
@@ -243,13 +245,13 @@ class MultiPlayerActivity : BaseInsetsActivity() {
 
     private fun buildConfig(url: String): StreamConfig {
         return StreamConfig.Builder(url)
-            .audioEnabled(false)
+            .audio(AudioOptions.disabled())
             .build()
     }
 
     override fun onResume() {
         super.onResume()
-        StreamPlayer.onAppForeground()
+        StreamPlayerRuntime.onAppForeground()
         summaryHandler.removeCallbacks(summaryRunnable)
         summaryHandler.post(summaryRunnable)
         updateSummary()
@@ -257,7 +259,7 @@ class MultiPlayerActivity : BaseInsetsActivity() {
 
     override fun onPause() {
         summaryHandler.removeCallbacks(summaryRunnable)
-        StreamPlayer.onAppBackground()
+        StreamPlayerRuntime.onAppBackground()
         super.onPause()
     }
 

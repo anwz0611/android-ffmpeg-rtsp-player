@@ -18,12 +18,16 @@ import android.widget.RadioButton
 import android.widget.TextView
 import android.widget.Toast
 import androidx.cardview.widget.CardView
+import com.jxj.ffmpegrtsp.lib.api.AudioOptions
+import com.jxj.ffmpegrtsp.lib.api.NetworkOptions
 import com.jxj.ffmpegrtsp.lib.api.PlayerStateSnapshot
+import com.jxj.ffmpegrtsp.lib.api.RecoveryOptions
 import com.jxj.ffmpegrtsp.lib.api.StreamConfig
 import com.jxj.ffmpegrtsp.lib.api.StreamErrorCode
 import com.jxj.ffmpegrtsp.lib.api.StreamPlayer
 import com.jxj.ffmpegrtsp.lib.api.StreamStateCode
 import com.jxj.ffmpegrtsp.lib.api.VideoInfo
+import com.jxj.ffmpegrtsp.lib.api.VideoOptions
 import com.jxj.ffmpegrtsp.lib.transform.VideoTransformManager
 import com.google.android.material.switchmaterial.SwitchMaterial
 import java.io.File
@@ -53,7 +57,6 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
         val rtspKeepAliveEnabled: Boolean,
         val softwareDecode: Boolean,
         val audioEnabled: Boolean,
-        val fastSeek: Boolean,
         val recoveryEnabled: Boolean,
         val transportCheckedId: Int,
         val rendererCheckedId: Int,
@@ -93,7 +96,6 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
     private lateinit var switchRtspKeepAlive: SwitchMaterial
     private lateinit var switchSoftwareDecode: SwitchMaterial
     private lateinit var switchAudioEnabled: SwitchMaterial
-    private lateinit var switchFastSeek: SwitchMaterial
     private lateinit var switchRecoveryEnabled: SwitchMaterial
     private lateinit var rgTransportProtocol: RadioGroup
     private lateinit var rgRendererType: RadioGroup
@@ -183,7 +185,6 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
         switchRtspKeepAlive = findViewById(R.id.switch_rtsp_keep_alive)
         switchSoftwareDecode = findViewById(R.id.switch_software_decode)
         switchAudioEnabled = findViewById(R.id.switch_audio_enabled)
-        switchFastSeek = findViewById(R.id.switch_fast_seek)
         switchRecoveryEnabled = findViewById(R.id.switch_recovery_enabled)
         rgTransportProtocol = findViewById(R.id.rg_transport_protocol)
         rgRendererType = findViewById(R.id.rg_renderer_type)
@@ -251,7 +252,17 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
             return
         }
 
-        val config = buildStreamConfig(url)
+        val config = try {
+            buildStreamConfig(url)
+        } catch (error: IllegalArgumentException) {
+            Log.e(TAG, "invalid stream config", error)
+            showToast("配置无效: ${error.message}")
+            return
+        } catch (error: IllegalStateException) {
+            Log.e(TAG, "incompatible stream config", error)
+            showToast("配置不兼容: ${error.message}")
+            return
+        }
 
         isPlaybackRequested = true
         playbackRequestedAtMs = System.currentTimeMillis()
@@ -319,44 +330,92 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
     }
 
     private fun buildStreamConfig(url: String): StreamConfig {
-        val builder = StreamConfig.Builder(url)
-            .audioEnabled(switchAudioEnabled.isChecked)
-            .rtspTransport(selectedTransportProtocol())
-            .rtspKeepAliveEnabled(switchRtspKeepAlive.isChecked)
-            .rtspKeepAliveInterval(parsePositiveInt(etRtspKeepAliveInterval, defaultValue = 30))
-            .bufferSize(parsePositiveInt(etBufferSize, defaultValue = 4096))
-            .timeout(parsePositiveInt(etTimeout, defaultValue = 10_000))
-            .enableFastSeek(switchFastSeek.isChecked)
-            .latencyMode(selectedLatencyMode())
-            .clockPolicy(selectedClockPolicy())
-            .audioInitBufferMs(parseBoundedInt(etAudioInitBufferMs, defaultValue = 200, minValue = 20, maxValue = 1000))
-            .recoveryEnabled(switchRecoveryEnabled.isChecked)
-            .recoveryMaxAttempts(parsePositiveInt(etRecoveryMaxAttempts, defaultValue = 3))
-            .recoveryIntervalMs(parsePositiveInt(etRecoveryIntervalMs, defaultValue = 300))
-            .recoveryNoPacketTimeoutMs(parsePositiveInt(etRecoveryNoPacketTimeoutMs, defaultValue = 1500))
-            .recoveryConnectTimeoutMs(parsePositiveInt(etRecoveryConnectTimeoutMs, defaultValue = 3000))
-
-        etProxyUrl.text?.toString()?.trim()?.takeIf { it.isNotEmpty() }?.let {
-            builder.proxyUrl(it)
-        }
-        etProxyUsername.text?.toString()?.trim()?.takeIf { it.isNotEmpty() }?.let {
-            builder.proxyUsername(it)
-        }
-        etProxyPassword.text?.toString()?.trim()?.takeIf { it.isNotEmpty() }?.let {
-            builder.proxyPassword(it)
-        }
-
-        if (switchSoftwareDecode.isChecked) {
-            builder
-                .decodeMode(StreamConfig.DecodeMode.SOFTWARE)
-                .softwareRenderMode(selectedSoftwareRenderMode())
+        val videoOptions = if (switchSoftwareDecode.isChecked) {
+            VideoOptions.software(selectedSoftwareRenderMode())
         } else {
-            builder
-                .decodeMode(StreamConfig.DecodeMode.HARDWARE)
-                .hardwareRenderMode(selectedHardwareRenderMode())
+            VideoOptions.hardware(selectedHardwareRenderMode())
         }
 
-        return builder.build()
+        val audioOptions = AudioOptions.builder()
+            .enabled(switchAudioEnabled.isChecked)
+            .clockPolicy(selectedClockPolicy())
+            .initialBufferMs(
+                parseBoundedInt(
+                    etAudioInitBufferMs,
+                    defaultValue = 60,
+                    minValue = 20,
+                    maxValue = 1000
+                )
+            )
+            .build()
+
+        val timeoutMs = parseBoundedInt(
+            etTimeout,
+            defaultValue = 3000,
+            minValue = 500,
+            maxValue = 60_000
+        )
+        val keepAliveSeconds = parseBoundedInt(
+            etRtspKeepAliveInterval,
+            defaultValue = 30,
+            minValue = 1,
+            maxValue = 300
+        )
+        val proxyUrl = etProxyUrl.text?.toString()?.trim()?.takeIf { it.isNotEmpty() }
+        val proxyUsername = etProxyUsername.text?.toString()?.trim()?.takeIf { it.isNotEmpty() }
+        val proxyPassword = etProxyPassword.text?.toString()?.takeIf { it.isNotEmpty() }
+        val networkOptionsBuilder = NetworkOptions.builder()
+            .rtspTransport(selectedTransportProtocol())
+            .connectTimeoutMs(timeoutMs)
+            .readTimeoutMs(timeoutMs)
+            .socketBufferBytes(
+                parseBoundedInt(
+                    etBufferSize,
+                    defaultValue = 8192,
+                    minValue = 512,
+                    maxValue = 4 * 1024 * 1024
+                )
+            )
+            .keepAliveEnabled(switchRtspKeepAlive.isChecked)
+            .keepAliveIntervalMs(keepAliveSeconds * 1000)
+
+        if (proxyUrl != null || proxyUsername != null || proxyPassword != null) {
+            networkOptionsBuilder.proxy(proxyUrl, proxyUsername, proxyPassword)
+        }
+
+        val recoveryOptions = RecoveryOptions.builder()
+            .enabled(switchRecoveryEnabled.isChecked)
+            .maxAttempts(
+                parseBoundedInt(etRecoveryMaxAttempts, defaultValue = 3, minValue = 1, maxValue = 20)
+            )
+            .retryIntervalMs(
+                parseBoundedInt(etRecoveryIntervalMs, defaultValue = 300, minValue = 50, maxValue = 10_000)
+            )
+            .noPacketTimeoutMs(
+                parseBoundedInt(
+                    etRecoveryNoPacketTimeoutMs,
+                    defaultValue = 1500,
+                    minValue = 200,
+                    maxValue = 30_000
+                )
+            )
+            .connectTimeoutMs(
+                parseBoundedInt(
+                    etRecoveryConnectTimeoutMs,
+                    defaultValue = 3000,
+                    minValue = 500,
+                    maxValue = 30_000
+                )
+            )
+            .build()
+
+        return StreamConfig.Builder(url)
+            .latencyMode(selectedLatencyMode())
+            .video(videoOptions)
+            .audio(audioOptions)
+            .network(networkOptionsBuilder.build())
+            .recovery(recoveryOptions)
+            .build()
     }
 
     private fun selectedTransportProtocol(): StreamConfig.TransportProtocol {
@@ -364,7 +423,7 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
             R.id.rb_transport_tcp -> StreamConfig.TransportProtocol.TCP
             R.id.rb_transport_udp -> StreamConfig.TransportProtocol.UDP
             R.id.rb_transport_multicast -> StreamConfig.TransportProtocol.MULTICAST
-            else -> StreamConfig.TransportProtocol.AUTO
+            else -> StreamConfig.TransportProtocol.TCP
         }
     }
 
@@ -407,7 +466,8 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
 
     private fun selectedLatencyMode(): StreamConfig.LatencyMode {
         return when (rgLatencyMode.checkedRadioButtonId) {
-            R.id.rb_latency_balanced -> StreamConfig.LatencyMode.BALANCED
+            R.id.rb_latency_balanced -> StreamConfig.LatencyMode.LOW_LATENCY
+            R.id.rb_latency_smooth -> StreamConfig.LatencyMode.SMOOTH
             else -> StreamConfig.LatencyMode.ULTRA_LOW_LATENCY
         }
     }
@@ -417,19 +477,6 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
             R.id.rb_clock_audio_master -> StreamConfig.ClockPolicy.AUDIO_MASTER
             R.id.rb_clock_video_master -> StreamConfig.ClockPolicy.VIDEO_MASTER
             else -> StreamConfig.ClockPolicy.AUTO
-        }
-    }
-
-    private fun parsePositiveInt(editText: EditText, defaultValue: Int): Int {
-        val rawValue = editText.text.toString().trim()
-        if (rawValue.isEmpty()) {
-            editText.setText(defaultValue.toString())
-            return defaultValue
-        }
-        return rawValue.toIntOrNull()?.takeIf { it > 0 } ?: run {
-            editText.setText(defaultValue.toString())
-            showToast("${editText.hint} 无效，已恢复默认值 $defaultValue")
-            defaultValue
         }
     }
 
@@ -977,7 +1024,6 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
             rtspKeepAliveEnabled = switchRtspKeepAlive.isChecked,
             softwareDecode = switchSoftwareDecode.isChecked,
             audioEnabled = switchAudioEnabled.isChecked,
-            fastSeek = switchFastSeek.isChecked,
             recoveryEnabled = switchRecoveryEnabled.isChecked,
             transportCheckedId = rgTransportProtocol.checkedRadioButtonId,
             rendererCheckedId = rgRendererType.checkedRadioButtonId,
@@ -1002,7 +1048,6 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
         switchRtspKeepAlive.isChecked = state.rtspKeepAliveEnabled
         switchSoftwareDecode.isChecked = state.softwareDecode
         switchAudioEnabled.isChecked = state.audioEnabled
-        switchFastSeek.isChecked = state.fastSeek
         switchRecoveryEnabled.isChecked = state.recoveryEnabled
         rgTransportProtocol.check(state.transportCheckedId)
         rgRendererType.check(state.rendererCheckedId)
@@ -1028,15 +1073,14 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
             rtspKeepAliveEnabled = true,
             softwareDecode = false,
             audioEnabled = true,
-            fastSeek = true,
             recoveryEnabled = true,
-            transportCheckedId = R.id.rb_transport_auto,
+            transportCheckedId = R.id.rb_transport_tcp,
             rendererCheckedId = R.id.rb_renderer_hw_surface_direct,
             latencyCheckedId = R.id.rb_latency_ultra_low,
             clockCheckedId = R.id.rb_clock_auto,
-            bufferSize = "4096",
-            timeout = "10000",
-            audioInitBufferMs = "200",
+            bufferSize = "8192",
+            timeout = "3000",
+            audioInitBufferMs = "60",
             rtspKeepAliveInterval = "30",
             proxyUrl = "",
             proxyUsername = "",

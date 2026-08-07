@@ -11,11 +11,13 @@ import android.widget.EditText
 import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
+import com.jxj.ffmpegrtsp.lib.api.AudioOptions
 import com.jxj.ffmpegrtsp.lib.api.PlayerStateSnapshot
 import com.jxj.ffmpegrtsp.lib.api.StreamConfig
 import com.jxj.ffmpegrtsp.lib.api.StreamErrorCode
 import com.jxj.ffmpegrtsp.lib.api.StreamPlayer
 import com.jxj.ffmpegrtsp.lib.api.StreamStateCode
+import com.jxj.ffmpegrtsp.lib.api.VideoOptions
 import com.jxj.ffmpegrtsp.lib.api.YuvPerformanceStats
 import com.jxj.ffmpegrtsp.lib.yuv.IAsyncYUVProcessor
 import com.jxj.ffmpegrtsp.lib.yuv.IYUVFrameProcessor
@@ -281,8 +283,8 @@ class YUVTestActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
             this,
             videoSurface,
             StreamConfig.Builder(url)
-                .decodeMode(StreamConfig.DecodeMode.SOFTWARE)
-                .audioEnabled(false)
+                .video(VideoOptions.software())
+                .audio(AudioOptions.disabled())
                 .build()
         )
             .setOnStateChanged {

@@ -296,36 +296,13 @@
                         android:textSize="12sp" />
                 </LinearLayout>
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:orientation="vertical">
-
-                    <com.google.android.material.switchmaterial.SwitchMaterial
-                        android:id="@+id/switch_fast_seek"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:checked="true"
-                        android:text="启用 Fast Seek"
-                        android:textColor="@color/text_primary" />
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="4dp"
-                        android:text="优化定位和追帧速度，直播场景通常保持开启。"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="12sp" />
-                </LinearLayout>
-
                 <com.google.android.material.textfield.TextInputLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
                     android:hint="缓冲区大小"
                     app:boxBackgroundMode="outline"
-                    app:helperText="单位：字节。默认 4096，网络抖动大时可适当调高。"
+                    app:helperText="单位：字节。SDK 默认 8192，有效范围 512-4194304。"
                     app:suffixText="B">
 
                     <com.google.android.material.textfield.TextInputEditText
@@ -334,7 +311,7 @@
                         android:layout_height="wrap_content"
                         android:hint="缓冲区大小"
                         android:inputType="number"
-                        android:text="4096" />
+                        android:text="8192" />
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <com.google.android.material.textfield.TextInputLayout
@@ -343,7 +320,7 @@
                     android:layout_marginTop="12dp"
                     android:hint="超时时间"
                     app:boxBackgroundMode="outline"
-                    app:helperText="单位：毫秒。连接或读流超时时间，默认 10000。"
+                    app:helperText="单位：毫秒。连接和读流超时，SDK 默认 3000。"
                     app:suffixText="ms">
 
                     <com.google.android.material.textfield.TextInputEditText
@@ -352,7 +329,7 @@
                         android:layout_height="wrap_content"
                         android:hint="超时时间"
                         android:inputType="number"
-                        android:text="10000" />
+                        android:text="3000" />
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <com.google.android.material.textfield.TextInputLayout
@@ -370,7 +347,7 @@
                         android:layout_height="wrap_content"
                         android:hint="初始音频缓冲"
                         android:inputType="number"
-                        android:text="200" />
+                        android:text="60" />
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <View
@@ -409,7 +386,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
-                    android:text="自动模式兼容性最好；TCP 更稳，UDP 延迟更低，组播只在明确使用组播源时选择。"
+                    android:text="默认使用 TCP；UDP 延迟更低，组播只在明确使用组播源时选择。"
                     android:textColor="@color/text_secondary"
                     android:textSize="12sp" />
 
@@ -418,14 +395,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:checkedButton="@id/rb_transport_auto"
+                    android:checkedButton="@id/rb_transport_tcp"
                     android:orientation="vertical">
-
-                    <RadioButton
-                        android:id="@+id/rb_transport_auto"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="自动选择" />
 
                     <RadioButton
                         android:id="@+id/rb_transport_tcp"
@@ -500,7 +471,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
-                    android:text="需要经过 HTTP / SOCKS 代理访问视频源时再填写；留空时直连。"
+                    android:text="支持 HTTP/HTTPS 代理；RTSP 会自动使用 HTTP(S) 隧道，留空时直连。"
                     android:textColor="@color/text_secondary"
                     android:textSize="12sp" />
 
@@ -621,7 +592,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
-                    android:text="均衡模式更稳；超低延迟模式更适合实时预览和对讲类场景。"
+                    android:text="超低延迟约 1 帧，低延迟约 3 帧，流畅模式约 6 帧；缓冲越多越稳，但端到端延迟也越高。"
                     android:textColor="@color/text_secondary"
                     android:textSize="12sp" />
 
@@ -637,7 +608,13 @@
                         android:id="@+id/rb_latency_balanced"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="均衡：稳定优先" />
+                        android:text="低延迟：兼顾实时性与抗抖动" />
+
+                    <RadioButton
+                        android:id="@+id/rb_latency_smooth"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="流畅：稳定优先" />
 
                     <RadioButton
                         android:id="@+id/rb_latency_ultra_low"
