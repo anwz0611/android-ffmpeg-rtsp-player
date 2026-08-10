@@ -50,7 +50,6 @@
 | OpenGL ES、自动重连 | ✅ | ✅ |
 | YUV 数据导出 | — | ✅ |
 | Headless YUV/AI 分析 | — | ✅ |
-| 核心源码 | 不提供 | 不提供 |
 
 ## Demo 截图
 
