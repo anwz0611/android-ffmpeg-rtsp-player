@@ -103,7 +103,7 @@ AAR 已内置 Consumer ProGuard/R8 规则，Android Gradle Plugin 在依赖 AAR 
 
 商业授权开放多路并发、YUV 数据导出和 Headless YUV/AI 分析，并可另外提供技术支持及定制开发。
 
-免费版和商业版均以 AAR 形式提供，不提供播放器核心源码。
+免费版和商业版均以 AAR 形式提供。
 
 - QQ 群：647718711
 - [GitHub Issues](https://github.com/anwz0611/android-ffmpeg-rtsp-player/issues)

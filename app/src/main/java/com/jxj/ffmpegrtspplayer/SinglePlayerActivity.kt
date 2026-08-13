@@ -383,31 +383,36 @@ class SinglePlayerActivity : BaseInsetsActivity(), SurfaceHolder.Callback {
             networkOptionsBuilder.proxy(proxyUrl, proxyUsername, proxyPassword)
         }
 
-        val recoveryOptions = RecoveryOptions.builder()
-            .enabled(switchRecoveryEnabled.isChecked)
-            .maxAttempts(
-                parseBoundedInt(etRecoveryMaxAttempts, defaultValue = 3, minValue = 1, maxValue = 20)
-            )
-            .retryIntervalMs(
-                parseBoundedInt(etRecoveryIntervalMs, defaultValue = 300, minValue = 50, maxValue = 10_000)
-            )
-            .noPacketTimeoutMs(
-                parseBoundedInt(
-                    etRecoveryNoPacketTimeoutMs,
-                    defaultValue = 1500,
-                    minValue = 200,
-                    maxValue = 30_000
+        // 新版 API 用 disabled() 表达关闭状态，不再提供 enabled(Boolean)。
+        val recoveryOptions = if (!switchRecoveryEnabled.isChecked) {
+            RecoveryOptions.disabled()
+        } else {
+            RecoveryOptions.builder()
+                .mode(RecoveryOptions.Mode.LIMITED)
+                .maxAttempts(
+                    parseBoundedInt(etRecoveryMaxAttempts, defaultValue = 3, minValue = 1, maxValue = 20)
                 )
-            )
-            .connectTimeoutMs(
-                parseBoundedInt(
-                    etRecoveryConnectTimeoutMs,
-                    defaultValue = 3000,
-                    minValue = 500,
-                    maxValue = 30_000
+                .retryIntervalMs(
+                    parseBoundedInt(etRecoveryIntervalMs, defaultValue = 300, minValue = 50, maxValue = 10_000)
                 )
-            )
-            .build()
+                .noPacketTimeoutMs(
+                    parseBoundedInt(
+                        etRecoveryNoPacketTimeoutMs,
+                        defaultValue = 1500,
+                        minValue = 200,
+                        maxValue = 30_000
+                    )
+                )
+                .connectTimeoutMs(
+                    parseBoundedInt(
+                        etRecoveryConnectTimeoutMs,
+                        defaultValue = 3000,
+                        minValue = 500,
+                        maxValue = 30_000
+                    )
+                )
+                .build()
+        }
 
         return StreamConfig.Builder(url)
             .latencyMode(selectedLatencyMode())
