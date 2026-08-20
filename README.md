@@ -108,10 +108,13 @@ AAR 已内置 Consumer ProGuard/R8 规则，Android Gradle Plugin 在依赖 AAR 
 - QQ 群：647718711
 - [GitHub Issues](https://github.com/anwz0611/android-ffmpeg-rtsp-player/issues)
 
-## 许可证
+## 许可证与商业授权
 
-- 示例源码：以仓库 `LICENSE` 为准
-- 核心播放器 SDK：闭源免费商用许可或商业授权
-- FFmpeg 等第三方组件：遵循各组件自身许可证
+本项目自有代码由作者版权所有，可按免费版条款或商业协议使用。
+
+本 SDK 包含 FFmpeg 6.1.1。FFmpeg 组件按照 GNU LGPL v2.1+ 授权，独立的
+`libffmpeg.so` 不属于本项目的闭源商业授权范围。FFmpeg 许可证和对应源码随发布版本提供，
+详见 [`ffmpeg/LICENSE.md`](licenses/FFmpeg/LICENSE.md) 和
+[`ffmpeg/COPYING.LGPLv2.1`](licenses/FFmpeg/COPYING.LGPLv2.1)。
 
 如果这个项目对你有帮助，欢迎点一个 Star 支持持续维护。
