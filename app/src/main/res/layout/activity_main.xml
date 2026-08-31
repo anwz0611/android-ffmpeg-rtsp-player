@@ -79,6 +79,16 @@
                 android:textSize="15sp"
                 app:backgroundTint="@color/brand_secondary"
                 app:cornerRadius="8dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_ai_demo"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginTop="10dp"
+                android:text="AI 识别能力"
+                android:textSize="15sp"
+                app:backgroundTint="@color/brand_secondary"
+                app:cornerRadius="8dp" />
         </LinearLayout>
 
         <LinearLayout

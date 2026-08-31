@@ -36,6 +36,12 @@
             android:screenOrientation="portrait"
             android:label="@string/single_player" />
         <activity
+            android:name=".AiDemoActivity"
+            android:exported="false"
+            android:configChanges="orientation|screenSize|keyboardHidden"
+            android:screenOrientation="portrait"
+            android:label="AI 识别能力" />
+        <activity
             android:name=".MultiPlayerActivity"
             android:exported="false"
             android:screenOrientation="portrait"

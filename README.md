@@ -26,6 +26,10 @@
 <img src="screenshot/testv.gif" alt="Android RTSP 超低延迟播放演示" width="760"/>
 </div>
 
+<div align="center">
+<img src="screenshot/ai.gif" alt="Android RTSP ai识别演示" width="760"/>
+</div>
+
 ## 功能特点
 
 - 硬件解码参考延迟 80–120ms，软件解码参考延迟 120–200ms
@@ -118,3 +122,38 @@ AAR 已内置 Consumer ProGuard/R8 规则，Android Gradle Plugin 在依赖 AAR 
 [`ffmpeg/COPYING.LGPLv2.1`](licenses/FFmpeg/COPYING.LGPLv2.1)。
 
 如果这个项目对你有帮助，欢迎点一个 Star 支持持续维护。
+# AI 识别能力演示
+
+`AiDemoActivity` 是对外展示 AI 能力的独立页面，使用
+`ffmpegrtsp-lib` + `ffmpegrtsp-ai-runtime-ncnn` 两个 AAR。`ffmpegrtsp-lib`可单独使用.
+
+## AAR 和模型
+
+将以下两个产物放入 `app/libs/`：
+
+```text
+ffmpegrtsp-lib.aar
+ffmpegrtsp-ai-runtime-ncnn.aar
+```
+
+演示模型位于：
+
+```text
+app/src/main/assets/models/yolox-l/
+  model.template.json
+  yolox.param
+  yolox.bin
+```
+
+
+## 演示页面
+
+从首页进入“AI 识别能力”，输入 RTSP 地址后先点击“开始播放”，再点击“启动 AI 识别”。
+当前核心的完整框绘制路径要求：
+
+```text
+HARDWARE + OPENGL_TEXTURE + useGpuRgb(true)
+```
+
+
+

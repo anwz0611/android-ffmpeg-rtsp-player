@@ -8,6 +8,7 @@ import android.widget.Button
 class MainActivity : BaseInsetsActivity() {
 
     private lateinit var btnSinglePlayer: Button
+    private lateinit var btnAiDemo: Button
     private lateinit var btnMultiPlayer: Button
     private lateinit var btnYuvTest: Button
     private lateinit var btnHeadlessAnalysis: Button
@@ -24,6 +25,7 @@ class MainActivity : BaseInsetsActivity() {
 
     private fun initViews() {
         btnSinglePlayer = findViewById(R.id.btn_single_player)
+        btnAiDemo = findViewById(R.id.btn_ai_demo)
         btnMultiPlayer = findViewById(R.id.btn_multi_player)
         btnYuvTest = findViewById(R.id.btn_yuv_test)
         btnHeadlessAnalysis = findViewById(R.id.btn_headless_analysis)
@@ -33,6 +35,10 @@ class MainActivity : BaseInsetsActivity() {
     private fun setupClickListeners() {
         btnSinglePlayer.setOnClickListener {
             startActivity(Intent(this, SinglePlayerActivity::class.java))
+        }
+
+        btnAiDemo.setOnClickListener {
+            startActivity(Intent(this, AiDemoActivity::class.java))
         }
 
         btnMultiPlayer.setOnClickListener {
