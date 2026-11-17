@@ -27,7 +27,7 @@
 </div>
 
 <div align="center">
-<img src="screenshot/ai.gif" alt="Android RTSP ai识别演示" width="760"/>
+<img src="screenshot/ai.gif" alt="Android RTSP ai识别演示" width="400"/>
 </div>
 
 ## 功能特点
@@ -53,7 +53,7 @@
 | H.264/H.265 软硬解 | ✅ | ✅ |
 | OpenGL ES、自动重连 | ✅ | ✅ |
 | YUV 数据导出 | — | ✅ |
-| Headless YUV/AI 分析 | — | ✅ |
+| RGB/BGR 模型输入预处理 | — | ✅ |
 
 ## Demo 截图
 
@@ -72,26 +72,27 @@ Demo 已获得专用展示授权，可以体验多路播放和 YUV 数据处理�
 - **机器人与远程操控**：适合巡检机器人、机器狗、无人车、机械臂等设备的视频回传，为远程驾驶、路径判断和现场处置提供实时画面。
 - **工业巡检**：接入普通网络相机、热成像设备或专用视频源，用于电力、能源、制造、矿区等现场巡检，并可结合 AI 分析识别人员、设备状态和异常目标。
 - **车载、船舶与应急指挥**：用于移动设备视频回传、远程会商和应急现场画面汇聚；弱网下可通过延迟策略和自动恢复提升连续性。
-- **智能视觉应用**：通过 YUV 数据回调接入 OpenCV、TensorFlow Lite、ONNX Runtime 或自研算法，实现人车识别、缺陷检测、区域入侵和行为分析。
+- **智能视觉应用**：通过硬解 OpenGL 的 YUV/RGB 主动取帧接入 OpenCV、TensorFlow Lite、ONNX Runtime 或自研算法，实现人车识别、缺陷检测、区域入侵和行为分析。
 
 不同设备、编码参数、网络环境和 GOP 长度都会影响实际延迟，建议使用目标硬件和真实视频源进行测试。
 
 ## 文档与示例
 
-完整的接入步骤、配置项、播放器生命周期、截图录像及 YUV API 请查看 [Android API 文档](https://github.com/anwz0611/android-ffmpeg-rtsp-player/wiki)。
+完整的接入步骤、配置项、播放器生命周期、截图录像及 RGB/YUV API 请查看 [Android API 参考](Android-API-Reference.md)。
 
 仓库内提供以下可运行示例：
 
 - [单路播放](app/src/main/java/com/jxj/ffmpegrtspplayer/SinglePlayerActivity.kt)
 - [多路播放](app/src/main/java/com/jxj/ffmpegrtspplayer/MultiPlayerActivity.kt)
-- [YUV 处理](app/src/main/java/com/jxj/ffmpegrtspplayer/YUVTestActivity.kt)
-- [Headless 分析](app/src/main/java/com/jxj/ffmpegrtspplayer/HeadlessAnalysisActivity.kt)
+- [YUV 主动取帧](app/src/main/java/com/jxj/ffmpegrtspplayer/YUVTestActivity.java)
+- [当前 Android API 参考](Android-API-Reference.md)
+- [YUV 主动取帧迁移说明](docs/yuv-pull-migration.md)
 
 ## R8 / ProGuard 混淆配置
 
 AAR 已内置 Consumer ProGuard/R8 规则，Android Gradle Plugin 在依赖 AAR 时会自动读取并合并这些规则。使用者通常不需要在宿主 App 中重复添加 SDK 混淆配置，直接按正常方式启用 R8/ProGuard 即可。
 
-这些规则用于保护播放器公开 API、JNI 入口、生命周期回调、截图录像能力以及 YUV 处理器接口，避免 SDK 在宿主 Release 构建中被错误裁剪或改名。若使用自定义打包工具而不会自动读取 AAR 内的 Consumer 规则，请确认该工具能够保留 AAR 的 `consumer-rules.pro` 配置。
+这些规则用于保护播放器公开 API、JNI 入口、生命周期回调、截图录像能力以及 RGB/YUV 主动 Source、lease、配置与统计接口，避免 SDK 在宿主 Release 构建中被错误裁剪或改名。若使用自定义打包工具而不会自动读取 AAR 内的 Consumer 规则，请确认该工具能够保留 AAR 的 `consumer-rules.pro` 配置。
 
 ## 参考延迟
 
@@ -105,7 +106,7 @@ AAR 已内置 Consumer ProGuard/R8 规则，Android Gradle Plugin 在依赖 AAR 
 
 ## 商业授权
 
-商业授权开放多路并发、YUV 数据导出和 Headless YUV/AI 分析，并可另外提供技术支持及定制开发。
+商业授权开放多路并发、YUV 数据导出和 RGB 模型输入预处理，并可另外提供技术支持及定制开发。
 
 免费版和商业版均以 AAR 形式提供。
 
@@ -157,3 +158,20 @@ HARDWARE + OPENGL_TEXTURE + useGpuRgb(true)
 
 
 
+
+## 主动取帧版本接入
+
+本示例代码已迁移到 `LatestYuvFrameSource` / `YuvFrameLease`，需要配套新版
+`ffmpegrtsp-lib.aar`。本次同步不替换 `app/libs/` 中的 AAR，请自行放入新版后构建。
+新版核心与 AI runtime 应使用配套发布产物。
+
+YUV 页面使用 `HARDWARE + OPENGL_TEXTURE`，支持 NV21/NV12/YUV420P、输出尺寸和最大
+FPS；在单个后台线程取帧、保存和释放 lease。保存成功会打印完整路径及文件大小，文件位于
+应用外部私有目录 `files/yuv/`，不会出现在系统相册。页面可滚动，帧信息定期刷新。
+
+旧软件解码 YUV 回调、处理后回写渲染和 Headless 回调分析示例已经移除。AI 页面继续通过
+`attachAiSession(...)` 使用 SDK 内置 AI，新版 SDK 内部使用主动 RGB Source；不应同时为
+同一路流另开 RGB Source。需要自行运行模型时，参照 API 文档中的 RGB 主动取帧示例。
+
+AAR 中的 `proguard.txt` 由库的 `consumer-rules.pro` 生成，宿主 R8 自动读取。
+本仓库 `docs/sdk-r8/` 保存对应 SDK 的规则供核对，不需要在宿主再重复引入。

@@ -127,20 +127,9 @@
                     android:layout_height="44dp"
                     android:layout_marginEnd="6dp"
                     android:layout_weight="1"
-                    android:text="YUV 数据测试"
+                    android:text="YUV 主动取帧"
                     android:textSize="13sp"
                     app:backgroundTint="@color/brand_primary"
-                    app:cornerRadius="8dp" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btn_headless_analysis"
-                    android:layout_width="0dp"
-                    android:layout_height="44dp"
-                    android:layout_marginStart="6dp"
-                    android:layout_weight="1"
-                    android:text="Headless 分析"
-                    android:textSize="13sp"
-                    app:backgroundTint="@color/brand_secondary"
                     app:cornerRadius="8dp" />
             </LinearLayout>
 
